@@ -6,6 +6,7 @@ export type FounderAdminResult = {
   uid?: string;
   email?: string;
   created?: boolean;
+  passwordSynced?: boolean;
   error?: string;
 };
 
