@@ -9,7 +9,7 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 import { authErrorMessage } from "@/lib/auth/errors";
 
 export default function SignupPage() {
-  const { signup, configured } = useAuth();
+  const { signup, loginWithGoogle, configured } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -34,6 +34,27 @@ export default function SignupPage() {
     } catch (err) {
       console.error("[signup]", err);
       setError(authErrorMessage(err, "Signup failed"));
+      // Partial success (account created, email send failed) → still enter app
+      try {
+        const { getClientAuth } = await import("@/lib/firebase/client");
+        if (getClientAuth().currentUser) router.replace("/dashboard");
+      } catch {
+        /* stay on signup */
+      }
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function onGoogle() {
+    setPending(true);
+    setError(null);
+    try {
+      await loginWithGoogle();
+      router.replace("/dashboard");
+    } catch (err) {
+      console.error("[google-signup]", err);
+      setError(authErrorMessage(err, "Google sign-in failed"));
     } finally {
       setPending(false);
     }
@@ -112,6 +133,19 @@ export default function SignupPage() {
                 {pending ? "Creating…" : "Get My India Address"}
               </button>
             </form>
+            <div className="my-4 flex items-center gap-3 text-xs text-[color:var(--muted)]">
+              <span className="h-px flex-1 bg-[color:var(--line)]" />
+              or
+              <span className="h-px flex-1 bg-[color:var(--line)]" />
+            </div>
+            <button
+              type="button"
+              disabled={pending || !configured}
+              onClick={onGoogle}
+              className="sp-btn-outline-navy w-full !text-sm"
+            >
+              Continue with Google
+            </button>
             <p className="mt-4 text-sm text-[color:var(--ink-soft)]">
               Already have an account?{" "}
               <Link href="/login" className="font-semibold text-[color:var(--chakra)]">

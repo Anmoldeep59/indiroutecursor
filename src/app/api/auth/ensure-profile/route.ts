@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb, isAdminConfigured } from "@/lib/firebase/admin";
 import { COLLECTIONS } from "@/lib/firebase/collections";
-import { generateIndId } from "@/lib/domain/ind";
+import { issueIndOnce } from "@/lib/auth/issueInd";
 import { notifyUser } from "@/lib/server/notifications";
 import type { UserProfile } from "@/lib/types";
 
@@ -19,9 +19,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // checkRevoked false; token must include fresh email_verified after client getIdToken(true)
     const decoded = await adminAuth().verifyIdToken(authHeader.slice(7));
-    const body = (await req.json().catch(() => ({}))) as { displayName?: string };
+    const body = (await req.json().catch(() => ({}))) as {
+      displayName?: string;
+      sendVerification?: boolean;
+    };
     const now = new Date().toISOString();
     const ref = adminDb().collection(COLLECTIONS.users).doc(decoded.uid);
     const existing = await ref.get();
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest) {
         role: "customer",
       };
       await ref.set(profile);
-      if (decoded.email) {
+      if (decoded.email && !emailVerified) {
         try {
           await notifyUser({
             userId: decoded.uid,
@@ -47,7 +49,6 @@ export async function POST(req: NextRequest) {
             type: "welcome",
             title: "Welcome to IndiRoute",
             body: "Verify your email to receive your permanent IND ID and India warehouse address.",
-            // Firebase Auth owns verification email; Resend welcome is optional
             sendEmail: false,
           });
         } catch (err) {
@@ -70,44 +71,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Issue IND exactly once after verification — transactional & idempotent
+    // Google / already-verified providers: issue IND, never send Resend verify
     if (emailVerified) {
-      await adminDb().runTransaction(async (tx) => {
-        const userSnap = await tx.get(ref);
-        const data = userSnap.data() as UserProfile | undefined;
-        if (!data) return;
-        if (data.indId) {
-          tx.set(ref, { emailVerified: true, updatedAt: now }, { merge: true });
-          return;
-        }
-
-        let indId = generateIndId();
-        for (let attempt = 0; attempt < 8; attempt++) {
-          const indRef = adminDb().collection(COLLECTIONS.indIndex).doc(indId);
-          const taken = await tx.get(indRef);
-          if (!taken.exists) {
-            tx.set(indRef, {
-              uid: decoded.uid,
-              createdAt: now,
-              permanent: true,
-              recycled: false,
-            });
-            tx.set(
-              ref,
-              {
-                indId,
-                emailVerified: true,
-                updatedAt: now,
-                indIssuedAt: now,
-              },
-              { merge: true },
-            );
-            return;
-          }
-          indId = generateIndId();
-        }
-        throw new Error("Could not allocate unique IND ID");
-      });
+      await issueIndOnce(decoded.uid);
     }
 
     const final = (await ref.get()).data() as UserProfile;
@@ -115,6 +81,7 @@ export async function POST(req: NextRequest) {
       uid: decoded.uid,
       emailVerified,
       indId: final?.indId ?? null,
+      provider: decoded.firebase?.sign_in_provider ?? "unknown",
     });
     return NextResponse.json({ profile: final });
   } catch (error) {

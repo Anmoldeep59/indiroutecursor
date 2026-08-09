@@ -105,5 +105,10 @@ service cloud.firestore {
     match /contactMessages/{id} {
       allow read, write: if false;
     }
+
+    // Custom Resend verification tokens — Admin SDK only
+    match /emailVerificationTokens/{id} {
+      allow read, write: if false;
+    }
   }
 }

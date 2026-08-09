@@ -10,7 +10,7 @@ import { AuthSplash } from "@/components/auth/AuthSplash";
 import { authErrorMessage } from "@/lib/auth/errors";
 
 function LoginForm() {
-  const { login, configured } = useAuth();
+  const { login, loginWithGoogle, configured } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +32,20 @@ function LoginForm() {
     }
   }
 
+  async function onGoogle() {
+    setPending(true);
+    setError(null);
+    try {
+      await loginWithGoogle();
+      router.replace("/dashboard");
+    } catch (err) {
+      console.error("[google-login]", err);
+      setError(authErrorMessage(err, "Google sign-in failed"));
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[color:var(--navy)]">
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
@@ -44,6 +58,11 @@ function LoginForm() {
           {params.get("reset") === "1" ? (
             <p className="mt-3 rounded-md bg-[color:var(--india-green-soft)] px-3 py-2 text-sm text-[color:var(--india-green)]">
               Password updated. You can log in now.
+            </p>
+          ) : null}
+          {params.get("verified") === "1" ? (
+            <p className="mt-3 rounded-md bg-[color:var(--india-green-soft)] px-3 py-2 text-sm text-[color:var(--india-green)]">
+              Email verified. Log in to open your dashboard and India address.
             </p>
           ) : null}
           {!configured ? (
@@ -81,6 +100,19 @@ function LoginForm() {
               {pending ? "Signing in…" : "Log in"}
             </button>
           </form>
+          <div className="my-4 flex items-center gap-3 text-xs text-[color:var(--muted)]">
+            <span className="h-px flex-1 bg-[color:var(--line)]" />
+            or
+            <span className="h-px flex-1 bg-[color:var(--line)]" />
+          </div>
+          <button
+            type="button"
+            disabled={pending || !configured}
+            onClick={onGoogle}
+            className="sp-btn-outline-navy w-full !text-sm"
+          >
+            Continue with Google
+          </button>
           <p className="mt-4 text-sm text-[color:var(--ink-soft)]">
             <Link href="/forgot-password" className="text-[color:var(--chakra)]">
               Forgot password

@@ -74,8 +74,8 @@ export function VerificationPanel() {
         <div>
           <p className="text-sm font-bold text-amber-950">Verify your email to unlock IndiRoute</p>
           <p className="mt-1 text-sm text-amber-950/80">
-            We sent a verification link to <strong>{user.email}</strong>. Your IND ID and India
-            warehouse address stay hidden until you verify.
+            We emailed a secure verification link to <strong>{user.email}</strong> via IndiRoute
+            (Resend). Your IND ID and India warehouse address stay hidden until you verify.
           </p>
         </div>
         <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-bold text-amber-950">

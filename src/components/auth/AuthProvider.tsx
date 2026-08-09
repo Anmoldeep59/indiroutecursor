@@ -15,12 +15,13 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  sendEmailVerification,
   sendPasswordResetEmail,
   updateProfile,
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import {
@@ -44,6 +45,7 @@ type AuthContextValue = {
   ensureProfile: () => Promise<UserProfile | null>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   resendVerification: () => Promise<void>;
   refreshVerification: () => Promise<boolean>;
@@ -54,6 +56,29 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const RESEND_COOLDOWN_MS = 60_000;
+
+async function callSendVerification(
+  idToken: string,
+  displayName: string,
+): Promise<{ ok: boolean; message?: string; error?: string; cooldownSeconds?: number }> {
+  const res = await fetch("/api/auth/send-verification", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ displayName }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return {
+      ok: false,
+      error: data.error || "Could not send verification email",
+      cooldownSeconds: data.cooldownSeconds,
+    };
+  }
+  return { ok: true, message: data.message };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const configured = isFirebaseClientConfigured();
@@ -141,21 +166,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const auth = getClientAuth();
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
-    try {
-      await sendEmailVerification(cred.user, emailActionCodeSettings());
-      lastResendAt.current = Date.now();
-      try {
-        sessionStorage.setItem("ir_verify_resend_at", String(lastResendAt.current));
-      } catch {
-        /* ignore */
-      }
-      console.info("[auth] verification email sent to", cred.user.email);
-    } catch (err) {
-      console.error("[auth] sendEmailVerification failed", err);
-      throw new Error(authErrorMessage(err, "Could not send verification email"));
-    }
-    const token = await cred.user.getIdToken();
-    const res = await fetch("/api/auth/ensure-profile", {
+
+    const token = await cred.user.getIdToken(true);
+    const profileRes = await fetch("/api/auth/ensure-profile", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -163,10 +176,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       body: JSON.stringify({ displayName: name }),
     });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
+    if (!profileRes.ok) {
+      const data = await profileRes.json().catch(() => ({}));
       console.error("[auth] ensure-profile after signup failed", data);
     }
+
+    // Custom Resend verification — NOT Firebase sendEmailVerification
+    const send = await callSendVerification(token, name);
+    lastResendAt.current = Date.now();
+    try {
+      sessionStorage.setItem("ir_verify_resend_at", String(lastResendAt.current));
+    } catch {
+      /* ignore */
+    }
+    if (!send.ok) {
+      // Account + profile exist; user can resend from dashboard
+      console.error("[auth] Resend verification failed after signup", send.error);
+      throw new Error(
+        send.error ||
+          "Account created, but verification email failed. Open the dashboard and tap Resend.",
+      );
+    }
+    console.info("[auth] Resend verification email requested for", cred.user.email);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -184,6 +215,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  /** Google Sign-In — verified by Google; no Resend verification email */
+  const loginWithGoogle = useCallback(async () => {
+    const auth = getClientAuth();
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    const cred = await signInWithPopup(auth, provider);
+    await cred.user.reload();
+    const token = await cred.user.getIdToken(true);
+    await fetch("/api/auth/ensure-profile", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ displayName: cred.user.displayName ?? "" }),
+    });
+    // Do NOT call send-verification for Google (emailVerified from provider)
+  }, []);
+
   const logout = useCallback(async () => {
     await signOut(getClientAuth());
     setProfile(null);
@@ -194,25 +244,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const auth = getClientAuth();
     const current = auth.currentUser;
     if (!current) throw new Error("Not signed in");
+    await current.reload();
     if (current.emailVerified) throw new Error("Email is already verified");
+
     const elapsed = Date.now() - lastResendAt.current;
     if (elapsed < RESEND_COOLDOWN_MS) {
       const wait = Math.ceil((RESEND_COOLDOWN_MS - elapsed) / 1000);
       throw new Error(`Resend available in ${wait} seconds`);
     }
-    try {
-      await sendEmailVerification(current, emailActionCodeSettings());
-      lastResendAt.current = Date.now();
-      try {
-        sessionStorage.setItem("ir_verify_resend_at", String(lastResendAt.current));
-      } catch {
-        /* ignore */
+
+    const token = await current.getIdToken(true);
+    const send = await callSendVerification(token, current.displayName ?? "");
+    if (!send.ok) {
+      if (send.cooldownSeconds) {
+        throw new Error(`Resend available in ${send.cooldownSeconds} seconds`);
       }
-      console.info("[auth] resend verification to", current.email);
-    } catch (err) {
-      console.error("[auth] resend verification failed", err);
-      throw new Error(authErrorMessage(err, "Could not resend verification email"));
+      throw new Error(send.error || "Could not resend verification email");
     }
+    lastResendAt.current = Date.now();
+    try {
+      sessionStorage.setItem("ir_verify_resend_at", String(lastResendAt.current));
+    } catch {
+      /* ignore */
+    }
+    console.info("[auth] Resend verification email resent to", current.email);
   }, []);
 
   const refreshVerification = useCallback(async () => {
@@ -220,7 +275,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const current = auth.currentUser;
     if (!current) return false;
     await current.reload();
-    // Force token refresh so Admin SDK sees email_verified
     await current.getIdToken(true);
     setUser(auth.currentUser);
     const profileResult = await (async () => {
@@ -247,7 +301,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return Boolean(auth.currentUser?.emailVerified);
   }, []);
 
-  // Refresh verification on tab focus / visibility (throttled)
   useEffect(() => {
     if (!user || user.emailVerified) return;
     let last = 0;
@@ -266,7 +319,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user, refreshVerification]);
 
-  // On login / dashboard mount when verified flag in URL
   useEffect(() => {
     if (!user) return;
     if (typeof window === "undefined") return;
@@ -285,7 +337,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       console.info("[auth] password reset email requested for", email);
     } catch (err) {
-      // Still succeed generically to caller — log real error for debug
       console.error("[auth] password reset error", err);
       throw err;
     }
@@ -315,6 +366,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ensureProfile,
       signup,
       login,
+      loginWithGoogle,
       logout,
       resendVerification,
       refreshVerification,
@@ -332,6 +384,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ensureProfile,
       signup,
       login,
+      loginWithGoogle,
       logout,
       resendVerification,
       refreshVerification,

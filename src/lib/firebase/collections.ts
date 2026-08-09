@@ -17,4 +17,6 @@ export const COLLECTIONS = {
   settings: "settings",
   indIndex: "indIndex",
   contactMessages: "contactMessages",
+  /** Server-only hashed email verification tokens (Admin SDK) */
+  emailVerificationTokens: "emailVerificationTokens",
 } as const;

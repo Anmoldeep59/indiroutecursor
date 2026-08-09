@@ -97,7 +97,8 @@ export function getFounderSettings(): FounderSettings {
     stripeStatementDescriptor:
       emptyToNull(process.env.STRIPE_STATEMENT_DESCRIPTOR) ?? "INDIROUTE",
     resendFromEmail:
-      emptyToNull(process.env.RESEND_FROM_EMAIL) ?? "noreply@indiroute.co",
+      emptyToNull(process.env.RESEND_FROM_EMAIL) ??
+      "IndiRoute <no-reply@indiroute.co>",
     launchBlockers,
   };
 }
