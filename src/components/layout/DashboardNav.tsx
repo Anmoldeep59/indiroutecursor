@@ -25,12 +25,12 @@ export function DashboardNav() {
   const { logout, profile, user } = useAuth();
 
   return (
-    <aside className="w-full border-b border-[color:var(--line)] bg-[color:var(--surface)] md:w-64 md:border-b-0 md:border-r">
+    <aside className="w-full border-b border-[color:var(--line)] bg-[color:var(--navy)] text-white md:w-64 md:border-b-0 md:border-r md:border-[color:var(--navy-deep)]">
       <div className="px-4 py-5">
-        <Link href="/" className="font-[family-name:var(--font-display)] text-xl">
-          IndiRoute
+        <Link href="/" className="text-xl font-bold">
+          Indi<span className="text-[color:var(--orange)]">Route</span>
         </Link>
-        <p className="mt-1 text-xs text-[color:var(--muted)]">
+        <p className="mt-1 text-xs text-white/60">
           {profile?.indId ?? (user?.emailVerified ? "Issuing IND…" : "Verify email")}
         </p>
       </div>
@@ -43,10 +43,10 @@ export function DashboardNav() {
             <Link
               key={link.href}
               href={link.href}
-              className={`whitespace-nowrap rounded-md px-3 py-2 text-sm ${
+              className={`whitespace-nowrap rounded-[4px] px-3 py-2 text-sm ${
                 active
-                  ? "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
-                  : "text-[color:var(--ink-soft)] hover:bg-[color:var(--wash)]"
+                  ? "bg-[color:var(--orange)] font-semibold text-white"
+                  : "text-white/80 hover:bg-white/10"
               }`}
             >
               {link.label}
@@ -58,7 +58,7 @@ export function DashboardNav() {
         <button
           type="button"
           onClick={() => logout()}
-          className="text-sm text-[color:var(--muted)] hover:text-[color:var(--ink)]"
+          className="text-sm text-white/60 hover:text-[color:var(--orange)]"
         >
           Log out
         </button>

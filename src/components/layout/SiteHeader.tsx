@@ -1,51 +1,85 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 const links = [
-  { href: "/how-it-works", label: "How it works" },
-  { href: "/shipping-calculator", label: "Calculator" },
+  { href: "/how-it-works", label: "How it works?" },
+  { href: "/shipping-calculator", label: "Shipping Calculator" },
   { href: "/pricing", label: "Pricing" },
   { href: "/countries", label: "Countries" },
   { href: "/faq", label: "FAQ" },
 ];
 
 export function SiteHeader() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <header className="relative z-20 border-b border-[color:var(--line)] bg-[color:var(--surface)]/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4 md:px-6">
-        <Link href="/" className="group flex flex-col">
-          <span className="font-[family-name:var(--font-display)] text-2xl tracking-tight text-[color:var(--ink)]">
-            IndiRoute
+    <header className="sticky top-0 z-50 bg-[color:var(--navy)] text-white shadow-[0_2px_8px_rgba(0,0,0,0.15)]">
+      <div className="sp-container flex items-center justify-between gap-4 py-3">
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--orange)] text-sm font-bold text-white">
+            IR
           </span>
-          <span className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">
-            India → World
+          <span className="text-xl font-bold tracking-tight">
+            Indi<span className="text-[color:var(--orange)]">Route</span>
           </span>
         </Link>
-        <nav className="hidden items-center gap-5 text-sm text-[color:var(--ink-soft)] md:flex">
+
+        <nav className="hidden items-center gap-6 text-[14px] font-medium lg:flex">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="transition hover:text-[color:var(--accent)]"
+              className="text-white/90 transition hover:text-[color:var(--orange)]"
             >
               {link.label}
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+
+        <div className="hidden items-center gap-2 sm:flex">
           <Link
             href="/login"
-            className="rounded-md px-3 py-2 text-sm text-[color:var(--ink-soft)] hover:text-[color:var(--ink)]"
+            className="rounded-[4px] bg-[color:var(--orange)] px-4 py-2 text-[15px] font-semibold text-white hover:bg-[color:var(--orange-hover)]"
           >
-            Log in
+            Login
           </Link>
           <Link
             href="/signup"
-            className="rounded-md bg-[color:var(--accent)] px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[color:var(--accent-deep)]"
+            className="rounded-[4px] border border-white/30 px-4 py-2 text-[15px] font-semibold text-white hover:bg-white/10"
           >
-            Get address
+            Sign up
           </Link>
         </div>
+
+        <button
+          type="button"
+          className="rounded border border-white/30 px-3 py-2 text-sm lg:hidden"
+          onClick={() => setOpen((v) => !v)}
+          aria-label="Menu"
+        >
+          Menu
+        </button>
       </div>
+
+      {open ? (
+        <div className="border-t border-white/10 bg-[color:var(--navy-deep)] px-5 py-4 lg:hidden">
+          <div className="flex flex-col gap-3 text-sm">
+            {links.map((link) => (
+              <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>
+                {link.label}
+              </Link>
+            ))}
+            <Link href="/login" className="sp-btn-orange mt-2" onClick={() => setOpen(false)}>
+              Login
+            </Link>
+            <Link href="/signup" className="text-center text-[color:var(--orange)]" onClick={() => setOpen(false)}>
+              Sign up for free
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }

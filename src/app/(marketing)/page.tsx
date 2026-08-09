@@ -1,129 +1,286 @@
 import Link from "next/link";
 
+const steps = [
+  {
+    n: "1",
+    title: "Shop any Indian store",
+    body: "Use your IndiRoute virtual address at checkout on Flipkart, Myntra, Amazon India, Ajio, Nykaa, or local sellers.",
+  },
+  {
+    n: "2",
+    title: "We receive & store",
+    body: "Packages arrive at our India warehouse and go into your personal locker. Enjoy 20 days of free storage.",
+  },
+  {
+    n: "3",
+    title: "Consolidate & save",
+    body: "Combine multiple orders into one box instead of shipping separately — the smart way to cut international shipping cost.",
+  },
+  {
+    n: "4",
+    title: "Ship to Australia",
+    body: "Choose a courier option, pay in AUD via Stripe, and track your parcel to your doorstep.",
+  },
+];
+
+const benefits = [
+  {
+    title: "Free Indian address",
+    body: "Get a permanent IND ID and warehouse address after email verification. Start shopping the same day.",
+  },
+  {
+    title: "20 days free storage",
+    body: "Shop from multiple stores at your pace. Storage clock starts when a package becomes Stored.",
+  },
+  {
+    title: "Package photos",
+    body: "See real receive photos in your dashboard before you pay to ship — transparency first.",
+  },
+  {
+    title: "AUD checkout",
+    body: "No wallet. Pay shipping + handling + storage due directly with Stripe when you’re ready.",
+  },
+];
+
+const faqs = [
+  {
+    q: "How can I buy from Flipkart or Myntra if I live in Australia?",
+    a: "Most Indian sites don’t ship internationally. Sign up with IndiRoute, use your India warehouse address at checkout, then we forward your parcels to Australia.",
+  },
+  {
+    q: "What is a virtual Indian shipping address?",
+    a: "It’s a real warehouse address assigned to you with your IND-XXXXXX. Merchants deliver there; we notify you, store the package, and ship when you pay.",
+  },
+  {
+    q: "Is the shipping calculator the final price?",
+    a: "No. The public calculator is an estimate only. Payable quotes use warehouse-recorded weight and dimensions and expire in 48 hours.",
+  },
+  {
+    q: "Who pays Australian duties and taxes?",
+    a: "You do. IndiRoute does not collect destination duties at checkout in Beta.",
+  },
+];
+
 export default function HomePage() {
   return (
-    <div>
-      <section className="relative overflow-hidden">
+    <div className="bg-white">
+      {/* Hero — ShopPre style navy + orange */}
+      <section className="relative overflow-hidden bg-[color:var(--navy)]">
         <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(115deg, var(--hero-a) 0%, var(--hero-b) 48%, #245c48 72%, var(--hero-c) 160%)",
-          }}
-        />
-        <div className="absolute inset-0 opacity-30 mix-blend-overlay"
+          className="absolute inset-0 opacity-40"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.25), transparent 40%), radial-gradient(circle at 80% 60%, rgba(0,0,0,0.25), transparent 45%)",
+              "radial-gradient(circle at 85% 20%, rgba(247,170,24,0.35), transparent 40%), linear-gradient(120deg, #1b284d 0%, #243868 55%, #1b284d 100%)",
           }}
         />
-        <div className="relative mx-auto flex min-h-[78vh] max-w-6xl flex-col justify-end px-4 pb-16 pt-28 md:px-6 md:pb-24">
-          <p className="text-sm uppercase tracking-[0.22em] text-[color:var(--saffron)]">
-            IndiRoute
-          </p>
-          <h1 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-5xl leading-[1.05] text-white md:text-7xl">
-            Shop in India. We deliver worldwide.
-          </h1>
-          <p className="mt-5 max-w-xl text-lg text-white/85">
-            Get a personal India warehouse address, consolidate parcels, pay in AUD,
-            and ship to Australia.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/signup"
-              className="rounded-md bg-white px-5 py-3 text-sm font-semibold text-[color:var(--hero-a)]"
-            >
-              Get my India address
-            </Link>
-            <Link
-              href="/shipping-calculator"
-              className="rounded-md border border-white/40 px-5 py-3 text-sm font-medium text-white"
-            >
-              Estimate shipping
+        <div className="sp-container relative grid items-center gap-10 py-16 md:grid-cols-2 md:py-24">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[color:var(--orange)]">
+              India&apos;s package forwarding — for Australia
+            </p>
+            <h1 className="mt-4 text-4xl font-bold leading-tight text-white md:text-5xl">
+              Shop from India and Ship Internationally
+            </h1>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-white/80 md:text-lg">
+              Sign up free, get your Indian virtual shipping address, consolidate parcels,
+              and deliver to your door in Australia.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/signup" className="sp-btn-orange">
+                Sign up for free
+              </Link>
+              <Link href="/dashboard" className="sp-btn-outline-white">
+                Dashboard
+              </Link>
+            </div>
+            <p className="mt-4 text-xs text-white/55">
+              Beta corridor: India → Australia · No wallet · Pay only when shipping
+            </p>
+          </div>
+          <div className="sp-card relative overflow-hidden p-6 md:p-8">
+            <p className="text-sm font-semibold text-[color:var(--orange)]">
+              Delivering joy to your doorstep
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-[color:var(--navy)]">
+              Your personal India locker
+            </h2>
+            <ul className="mt-5 space-y-3 text-sm text-[color:var(--ink-soft)]">
+              <li className="flex gap-2">
+                <span className="text-[color:var(--orange)] font-bold">✓</span>
+                Free signup & permanent IND ID
+              </li>
+              <li className="flex gap-2">
+                <span className="text-[color:var(--orange)] font-bold">✓</span>
+                20 days free storage from Stored
+              </li>
+              <li className="flex gap-2">
+                <span className="text-[color:var(--orange)] font-bold">✓</span>
+                Consolidate multiple Indian parcels
+              </li>
+              <li className="flex gap-2">
+                <span className="text-[color:var(--orange)] font-bold">✓</span>
+                Stripe AUD payment + tracking
+              </li>
+            </ul>
+            <Link href="/shipping-calculator" className="sp-btn-orange mt-6 w-full">
+              Check shipping rates
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16 md:px-6">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl">How it works</h2>
-        <p className="mt-2 max-w-2xl text-[color:var(--ink-soft)]">
-          Four steps from Indian checkout to Australian delivery.
+      {/* Trust strip */}
+      <section className="border-b border-[color:var(--line)] bg-[color:var(--wash)]">
+        <div className="sp-container grid gap-4 py-6 text-center text-sm font-medium text-[color:var(--navy)] sm:grid-cols-3">
+          <p>Secure Stripe payments</p>
+          <p>Package photos in your account</p>
+          <p>Clear storage & shipping policies</p>
+        </div>
+      </section>
+
+      {/* Main SEO block */}
+      <section className="sp-container py-14">
+        <h2 className="text-3xl font-bold text-[color:var(--navy)] md:text-[32px]">
+          Shop from India and Ship Internationally — Delivered to Australia
+        </h2>
+        <p className="mt-4 max-w-4xl text-[15px] leading-relaxed text-[color:var(--ink-soft)]">
+          Want to buy from Indian online stores but can&apos;t because they don&apos;t ship
+          internationally? IndiRoute is a package forwarding service that lets you shop from
+          Indian stores and get orders shipped to Australia. Sign up, get your free Indian
+          virtual shipping address, and start shopping.
         </p>
-        <ol className="mt-8 grid gap-6 md:grid-cols-4">
-          {[
-            ["Address", "Verify email and receive your permanent IND ID plus warehouse address."],
-            ["Shop", "Order from Indian sites. Put your name and IND on the label."],
-            ["We receive", "We photograph, weigh, and store packages for 20 free days."],
-            ["We ship", "Get an AUD quote from warehouse measurements, pay via Stripe, track delivery."],
-          ].map(([title, copy], i) => (
-            <li key={title} className="border-t border-[color:var(--line)] pt-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--accent)]">
-                Step {i + 1}
-              </p>
-              <p className="mt-2 font-[family-name:var(--font-display)] text-xl">{title}</p>
-              <p className="mt-2 text-sm text-[color:var(--ink-soft)]">{copy}</p>
-            </li>
+      </section>
+
+      {/* How it works — 4 steps */}
+      <section className="bg-[color:var(--wash)] py-14">
+        <div className="sp-container">
+          <h2 className="text-center text-3xl font-bold text-[color:var(--navy)]">
+            How international shipping from India works
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[color:var(--ink-soft)]">
+            Four simple steps from Indian checkout to your Australian address.
+          </p>
+          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {steps.map((step) => (
+              <div key={step.n} className="sp-card p-5">
+                <span className="sp-step-num">{step.n}</span>
+                <h3 className="mt-4 text-lg font-bold text-[color:var(--navy)]">{step.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[color:var(--ink-soft)]">
+                  {step.body}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Link href="/how-it-works" className="font-semibold text-[color:var(--blue)] hover:underline">
+              See full how it works →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits grid */}
+      <section className="sp-container py-14">
+        <h2 className="text-3xl font-bold text-[color:var(--navy)]">Why IndiRoute</h2>
+        <div className="mt-8 grid gap-5 sm:grid-cols-2">
+          {benefits.map((b) => (
+            <div key={b.title} className="rounded-[8px] bg-[color:var(--blue-soft)] p-5">
+              <h3 className="text-lg font-bold text-[color:var(--navy)]">{b.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[color:var(--ink-soft)]">{b.body}</p>
+            </div>
           ))}
-        </ol>
+        </div>
       </section>
 
-      <section className="bg-[color:var(--ink)] px-4 py-16 text-[color:var(--cream)] md:px-6">
-        <div className="mx-auto max-w-6xl grid gap-10 md:grid-cols-2">
+      {/* Consolidation callout */}
+      <section className="bg-[color:var(--navy)] py-14 text-white">
+        <div className="sp-container grid items-center gap-8 md:grid-cols-2">
           <div>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl">
-              Consolidate and save
-            </h2>
-            <p className="mt-3 text-[color:var(--cream-muted)]">
-              Multiple Indian parcels can become one outbound shipment. Final price uses
-              warehouse weight and dimensions — never your calculator estimate.
+            <h2 className="text-3xl font-bold">Consolidate and save</h2>
+            <p className="mt-4 text-white/75 leading-relaxed">
+              Instead of shipping five packages separately, combine them into one box. Final
+              payable quotes always use warehouse weight and dimensions — never calculator
+              estimates alone.
             </p>
           </div>
-          <div>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl">
-              Built for trust
-            </h2>
-            <p className="mt-3 text-[color:var(--cream-muted)]">
-              Real package photos, Stripe Checkout in AUD, clear storage rules, and no
-              wallet balance. Destination duties in Australia remain your responsibility.
+          <div className="rounded-[8px] bg-white/10 p-6">
+            <p className="text-[color:var(--orange)] font-semibold">Beta focus</p>
+            <p className="mt-2 text-2xl font-bold">India → Australia</p>
+            <p className="mt-3 text-sm text-white/70">
+              Assisted Purchase is coming later (P1). Public tracking page is P1. Logged-in
+              tracking is available now after dispatch.
             </p>
+            <Link href="/signup" className="sp-btn-orange mt-6 inline-flex">
+              Open your locker free
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16 md:px-6">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl">Beta corridor</h2>
-        <p className="mt-2 text-[color:var(--ink-soft)]">
-          Currently shipping to Australia only. Other countries are not available in Beta.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/pricing" className="rounded-md bg-[color:var(--accent)] px-4 py-2 text-sm text-white">
-            View pricing
-          </Link>
-          <Link href="/prohibited" className="rounded-md bg-[color:var(--wash)] px-4 py-2 text-sm">
-            Prohibited items
-          </Link>
-          <Link href="/faq" className="rounded-md bg-[color:var(--wash)] px-4 py-2 text-sm">
-            FAQ
+      {/* CTA band like ShopPre */}
+      <section className="border-y border-[color:var(--line)] bg-[color:var(--wash)] py-12">
+        <div className="sp-container flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-[color:var(--navy)] md:text-3xl">
+              Delivering joy to your doorstep
+            </h2>
+            <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
+              Sign up and start shipping from India to Australia. Free to join.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/signup" className="sp-btn-orange">
+              Sign up for free
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[color:var(--navy)] px-5 py-3 text-[15px] font-semibold text-[color:var(--navy)]"
+            >
+              Dashboard
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ accordion-style */}
+      <section className="sp-container py-14">
+        <h2 className="text-3xl font-bold text-[color:var(--navy)]">
+          Discover more answers on IndiRoute
+        </h2>
+        <div className="mt-8 space-y-3">
+          {faqs.map((item) => (
+            <details key={item.q} className="sp-card group p-5">
+              <summary className="cursor-pointer list-none text-[15px] font-semibold text-[color:var(--navy)]">
+                <span className="flex items-start justify-between gap-4">
+                  {item.q}
+                  <span className="text-[color:var(--orange)] group-open:rotate-45 transition">+</span>
+                </span>
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-[color:var(--ink-soft)]">{item.a}</p>
+            </details>
+          ))}
+        </div>
+        <div className="mt-6">
+          <Link href="/faq" className="font-semibold text-[color:var(--blue)] hover:underline">
+            View all FAQs →
           </Link>
         </div>
       </section>
 
-      <section className="border-t border-[color:var(--line)] px-4 py-16 md:px-6">
-        <div className="mx-auto max-w-6xl flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-          <div>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl">
-              Ready for your India address?
-            </h2>
-            <p className="mt-2 text-[color:var(--ink-soft)]">
-              Create an account, verify your email, and start shopping.
-            </p>
-          </div>
+      {/* Final orange CTA */}
+      <section className="bg-[color:var(--orange)] py-12">
+        <div className="sp-container text-center">
+          <h2 className="text-2xl font-bold text-white md:text-3xl">
+            So what are you waiting for? Open your India address today.
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-sm text-white/90">
+            Membership is free. Verify your email and receive your IND ID immediately.
+          </p>
           <Link
             href="/signup"
-            className="rounded-md bg-[color:var(--accent)] px-5 py-3 text-sm font-semibold text-white"
+            className="mt-6 inline-flex rounded-[4px] bg-[color:var(--navy)] px-6 py-3 text-[15px] font-semibold text-white hover:bg-[color:var(--navy-deep)]"
           >
-            Get started
+            Sign up for free
           </Link>
         </div>
       </section>

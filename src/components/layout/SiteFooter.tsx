@@ -2,40 +2,50 @@ import Link from "next/link";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-[color:var(--line)] bg-[color:var(--ink)] text-[color:var(--cream)]">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4 md:px-6">
-        <div className="md:col-span-2">
-          <p className="font-[family-name:var(--font-display)] text-3xl">IndiRoute</p>
-          <p className="mt-3 max-w-md text-sm text-[color:var(--cream-muted)]">
-            Shop in India. We deliver worldwide. Personal India warehouse address,
-            consolidation, and Australia-bound shipping for Beta.
+    <footer className="mt-auto bg-[color:var(--navy)] text-white">
+      <div className="sp-container grid gap-10 py-14 md:grid-cols-4">
+        <div className="md:col-span-1">
+          <p className="text-2xl font-bold">
+            Indi<span className="text-[color:var(--orange)]">Route</span>
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-white/70">
+            Shop Indian stores and ship internationally. Personal India warehouse address,
+            consolidation, and Australia delivery for Beta.
           </p>
         </div>
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--saffron)]">
-            Explore
-          </p>
-          <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/how-it-works">How it works</Link></li>
-            <li><Link href="/pricing">Pricing</Link></li>
-            <li><Link href="/prohibited">Prohibited items</Link></li>
-            <li><Link href="/contact">Contact</Link></li>
+          <p className="text-sm font-semibold text-[color:var(--orange)]">Services</p>
+          <ul className="mt-3 space-y-2 text-sm text-white/80">
+            <li><Link href="/how-it-works" className="hover:text-[color:var(--orange)]">How it works</Link></li>
+            <li><Link href="/shipping-calculator" className="hover:text-[color:var(--orange)]">Shipping calculator</Link></li>
+            <li><Link href="/pricing" className="hover:text-[color:var(--orange)]">Pricing</Link></li>
+            <li><Link href="/countries" className="hover:text-[color:var(--orange)]">Countries</Link></li>
           </ul>
         </div>
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--saffron)]">
-            Legal
-          </p>
-          <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/terms">Terms</Link></li>
-            <li><Link href="/privacy">Privacy</Link></li>
-            <li><Link href="/shipping-policy">Shipping policy</Link></li>
-            <li><Link href="/refund-policy">Refund policy</Link></li>
+          <p className="text-sm font-semibold text-[color:var(--orange)]">Support</p>
+          <ul className="mt-3 space-y-2 text-sm text-white/80">
+            <li><Link href="/faq" className="hover:text-[color:var(--orange)]">FAQ</Link></li>
+            <li><Link href="/prohibited" className="hover:text-[color:var(--orange)]">Prohibited items</Link></li>
+            <li><Link href="/contact" className="hover:text-[color:var(--orange)]">Contact</Link></li>
+            <li><Link href="/about" className="hover:text-[color:var(--orange)]">About us</Link></li>
+          </ul>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-[color:var(--orange)]">Legal</p>
+          <ul className="mt-3 space-y-2 text-sm text-white/80">
+            <li><Link href="/terms" className="hover:text-[color:var(--orange)]">Terms</Link></li>
+            <li><Link href="/privacy" className="hover:text-[color:var(--orange)]">Privacy</Link></li>
+            <li><Link href="/shipping-policy" className="hover:text-[color:var(--orange)]">Shipping policy</Link></li>
+            <li><Link href="/refund-policy" className="hover:text-[color:var(--orange)]">Refund policy</Link></li>
           </ul>
         </div>
       </div>
-      <div className="border-t border-white/10 px-4 py-4 text-center text-xs text-[color:var(--cream-muted)]">
-        © {new Date().getFullYear()} IndiRoute · indiroute.co · Beta: India → Australia
+      <div className="border-t border-white/10">
+        <div className="sp-container flex flex-col gap-2 py-4 text-center text-xs text-white/55 md:flex-row md:justify-between">
+          <p>© {new Date().getFullYear()} IndiRoute · indiroute.co</p>
+          <p>Beta corridor: India → Australia</p>
+        </div>
       </div>
     </footer>
   );

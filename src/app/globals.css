@@ -1,43 +1,111 @@
 @import "tailwindcss";
 
+/* ShopPre-inspired IndiRoute design system */
 :root {
-  --background: #eef3f0;
-  --foreground: #142822;
-  --ink: #142822;
-  --ink-soft: #3d524a;
-  --muted: #6a7d75;
-  --surface: #fbfdfc;
-  --wash: #e4ece8;
-  --line: #c9d6d0;
-  --accent: #0f6b4c;
-  --accent-deep: #0a4d37;
-  --accent-soft: #d7efe6;
-  --saffron: #d97706;
-  --cream: #f7faf8;
-  --cream-muted: #b7c4be;
-  --hero-a: #0f3d32;
-  --hero-b: #1f6f56;
-  --hero-c: #c4a35a;
+  --navy: #1b284d;
+  --navy-deep: #121c38;
+  --navy-soft: #2a3a66;
+  --orange: #f7aa18;
+  --orange-hover: #e09810;
+  --orange-deep: #f79928;
+  --blue: #507dbc;
+  --blue-soft: #d7e7ff;
+  --ink: #1b284d;
+  --ink-soft: #4a5570;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --surface: #ffffff;
+  --wash: #f5f7fb;
+  --background: #ffffff;
+  --foreground: #1b284d;
+  --cream: #ffffff;
+  --cream-muted: #c5cbe0;
+  --accent: #f7aa18;
+  --accent-deep: #e09810;
+  --accent-soft: #fff4d6;
+  --saffron: #f7aa18;
+  --hero-a: #1b284d;
+  --hero-b: #243868;
+  --hero-c: #f7aa18;
+  --radius: 8px;
+  --shadow: 0 4px 6px -6px #222;
+  --shadow-card: 0 8px 24px rgba(27, 40, 77, 0.08);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
-  --font-display: var(--font-display);
+  --font-display: var(--font-body);
 }
 
 body {
-  background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(196, 163, 90, 0.18), transparent 55%),
-    radial-gradient(900px 500px at 90% 0%, rgba(15, 107, 76, 0.12), transparent 50%),
-    linear-gradient(180deg, #eef3f0 0%, #e7efe9 40%, #f4f7f5 100%);
+  background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-body), Georgia, serif;
+  font-family: var(--font-body), "Montserrat", system-ui, sans-serif;
   min-height: 100%;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+.sp-container {
+  width: 100%;
+  max-width: 1080px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.sp-btn-orange {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--orange);
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 16px;
+  border-radius: 4px;
+  padding: 12px 22px;
+  border: none;
+  transition: background 0.2s ease;
+}
+
+.sp-btn-orange:hover {
+  background: var(--orange-hover);
+}
+
+.sp-btn-outline-white {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 16px;
+  border-radius: 4px;
+  padding: 10px 20px;
+}
+
+.sp-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--line);
+}
+
+.sp-step-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--orange);
+  color: #fff;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
 }

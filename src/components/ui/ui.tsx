@@ -9,15 +9,15 @@ export function Button({
 }) {
   const styles = {
     primary:
-      "bg-[color:var(--accent)] text-white hover:bg-[color:var(--accent-deep)]",
+      "bg-[color:var(--orange)] text-white hover:bg-[color:var(--orange-hover)]",
     secondary:
-      "bg-[color:var(--wash)] text-[color:var(--ink)] hover:bg-[color:var(--line)]",
+      "bg-[color:var(--wash)] text-[color:var(--navy)] border border-[color:var(--line)] hover:bg-[color:var(--line)]",
     danger: "bg-red-700 text-white hover:bg-red-800",
     ghost: "bg-transparent text-[color:var(--ink-soft)] hover:bg-[color:var(--wash)]",
   };
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${styles[variant]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-[4px] px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${styles[variant]} ${className}`}
       {...props}
     />
   );
@@ -29,7 +29,7 @@ export function Input({
 }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`w-full rounded-md border border-[color:var(--line)] bg-white px-3 py-2 text-sm text-[color:var(--ink)] outline-none ring-[color:var(--accent)] focus:ring-2 ${className}`}
+      className={`w-full rounded-[4px] border border-[color:var(--line)] bg-white px-3 py-2.5 text-sm text-[color:var(--navy)] outline-none ring-[color:var(--orange)] focus:ring-2 ${className}`}
       {...props}
     />
   );
@@ -45,7 +45,7 @@ export function Label({
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-1 block text-xs font-medium uppercase tracking-[0.08em] text-[color:var(--muted)]"
+      className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-[color:var(--muted)]"
     >
       {children}
     </label>
@@ -61,7 +61,7 @@ export function Panel({
 }) {
   return (
     <div
-      className={`rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] p-5 shadow-[0_1px_0_rgba(20,40,34,0.04)] ${className}`}
+      className={`rounded-[8px] border border-[color:var(--line)] bg-white p-5 shadow-[var(--shadow-card)] ${className}`}
     >
       {children}
     </div>
@@ -77,9 +77,7 @@ export function PageTitle({
 }) {
   return (
     <div className="mb-6">
-      <h1 className="font-[family-name:var(--font-display)] text-3xl text-[color:var(--ink)]">
-        {title}
-      </h1>
+      <h1 className="text-3xl font-bold text-[color:var(--navy)]">{title}</h1>
       {subtitle ? (
         <p className="mt-2 max-w-2xl text-sm text-[color:var(--ink-soft)]">{subtitle}</p>
       ) : null}
@@ -95,12 +93,12 @@ export function Alert({
   tone?: "info" | "warn" | "danger" | "success";
 }) {
   const map = {
-    info: "border-sky-200 bg-sky-50 text-sky-950",
-    warn: "border-amber-200 bg-amber-50 text-amber-950",
+    info: "border-[#507dbc]/40 bg-[color:var(--blue-soft)] text-[color:var(--navy)]",
+    warn: "border-amber-200 bg-[#fff4d6] text-amber-950",
     danger: "border-red-200 bg-red-50 text-red-950",
     success: "border-emerald-200 bg-emerald-50 text-emerald-950",
   };
   return (
-    <div className={`rounded-md border px-3 py-2 text-sm ${map[tone]}`}>{children}</div>
+    <div className={`rounded-[8px] border px-3 py-2 text-sm ${map[tone]}`}>{children}</div>
   );
 }

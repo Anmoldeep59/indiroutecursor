@@ -28,11 +28,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
-      <Link href="/" className="font-[family-name:var(--font-display)] text-2xl">
-        IndiRoute
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center bg-[color:var(--wash)] px-4 py-12">
+      <Link href="/" className="text-2xl font-bold text-[color:var(--navy)]">
+        Indi<span className="text-[color:var(--orange)]">Route</span>
       </Link>
-      <h1 className="mt-6 text-3xl font-[family-name:var(--font-display)]">Log in</h1>
+      <h1 className="mt-6 text-3xl font-bold text-[color:var(--navy)]">Login</h1>
       {!configured ? (
         <div className="mt-4">
           <Alert tone="warn">Firebase client env vars are not configured.</Alert>
