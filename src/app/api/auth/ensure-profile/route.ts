@@ -27,7 +27,17 @@ export async function POST(req: NextRequest) {
     const now = new Date().toISOString();
     const ref = adminDb().collection(COLLECTIONS.users).doc(decoded.uid);
     const existing = await ref.get();
-    const emailVerified = Boolean(decoded.email_verified);
+
+    // Staff / founder admin: force verified, never require Resend OTP
+    const staffSnap = await adminDb()
+      .collection(COLLECTIONS.staff)
+      .doc(decoded.uid)
+      .get();
+    const isStaff = staffSnap.exists && staffSnap.data()?.active !== false;
+    if (isStaff && !decoded.email_verified) {
+      await adminAuth().updateUser(decoded.uid, { emailVerified: true });
+    }
+    const emailVerified = Boolean(decoded.email_verified || isStaff);
 
     if (!existing.exists) {
       const profile: UserProfile = {

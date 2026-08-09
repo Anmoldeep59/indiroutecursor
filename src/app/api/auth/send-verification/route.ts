@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth, isAdminConfigured } from "@/lib/firebase/admin";
+import { adminAuth, adminDb, isAdminConfigured } from "@/lib/firebase/admin";
+import { COLLECTIONS } from "@/lib/firebase/collections";
 import { sendCustomVerificationEmail } from "@/lib/auth/emailVerification";
 
 export async function POST(req: NextRequest) {
@@ -18,6 +19,22 @@ export async function POST(req: NextRequest) {
     const decoded = await adminAuth().verifyIdToken(authHeader.slice(7));
     const body = (await req.json().catch(() => ({}))) as { displayName?: string };
 
+    // Staff / founder admin — never send customer verification emails
+    const staffSnap = await adminDb()
+      .collection(COLLECTIONS.staff)
+      .doc(decoded.uid)
+      .get();
+    if (staffSnap.exists && staffSnap.data()?.active !== false) {
+      if (!decoded.email_verified) {
+        await adminAuth().updateUser(decoded.uid, { emailVerified: true });
+      }
+      return NextResponse.json({
+        ok: true,
+        skipped: true,
+        message: "Staff accounts do not require email verification",
+      });
+    }
+
     if (decoded.email_verified) {
       return NextResponse.json({
         ok: true,
@@ -30,18 +47,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Account has no email" }, { status: 400 });
     }
 
-    // Never send Resend verify for Google (or other already-verified providers)
+    // Never send Resend verify for Google
     const provider = decoded.firebase?.sign_in_provider;
-    if (provider && provider !== "password" && provider !== "custom") {
-      // If Firebase says unverified but provider isn't password, still allow send
-      // only for password. Google should already be verified.
-      if (provider === "google.com") {
-        return NextResponse.json({
-          ok: true,
-          skipped: true,
-          message: "Google accounts are verified by Google",
-        });
-      }
+    if (provider === "google.com") {
+      return NextResponse.json({
+        ok: true,
+        skipped: true,
+        message: "Google accounts are verified by Google",
+      });
     }
 
     const result = await sendCustomVerificationEmail({

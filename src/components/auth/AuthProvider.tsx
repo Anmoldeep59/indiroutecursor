@@ -121,7 +121,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(snap.exists() ? (snap.data() as UserProfile) : null);
     });
     const unsubStaff = onSnapshot(doc(db, COLLECTIONS.staff, user.uid), (snap) => {
-      setStaff(snap.exists() ? (snap.data() as StaffProfile) : null);
+      if (!snap.exists()) {
+        setStaff(null);
+        return;
+      }
+      const data = snap.data() as StaffProfile;
+      setStaff(data.active === false ? null : data);
     });
     return () => {
       unsubUser();
