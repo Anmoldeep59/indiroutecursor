@@ -340,11 +340,256 @@ button.btn-saffron {
   }
 }
 
+/* ── Rich homepage motion (presence, not chaos) ── */
+.hero-grid-fade {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(circle at 50% 40%, black, transparent 75%);
+}
+
+.hero-copy {
+  animation: rise-in 0.7s ease-out both;
+}
+.hero-stage {
+  animation: rise-in 0.85s ease-out 0.08s both;
+}
+.hero-courier {
+  animation: courier-float 4s ease-in-out infinite;
+}
+.hero-globe {
+  animation: globe-spin 28s linear infinite;
+}
+.hero-plane {
+  animation: plane-fly 7s linear infinite;
+}
+.parcel {
+  animation: parcel-float 3.4s ease-in-out infinite;
+}
+.parcel-b { animation-delay: 0.4s; }
+.parcel-c { animation-delay: 0.9s; }
+.bag-bob {
+  animation: bag-bob 2.8s ease-in-out infinite;
+}
+.bag-delay { animation-delay: 0.5s; }
+.truck-drive {
+  animation: truck-nudge 3.6s ease-in-out infinite;
+}
+.stat-pop {
+  animation: rise-in 0.6s ease-out both;
+}
+.stat-pop:nth-child(2) { animation-delay: 0.08s; }
+.stat-pop:nth-child(3) { animation-delay: 0.16s; }
+.stat-pop:nth-child(4) { animation-delay: 0.24s; }
+
+.service-card {
+  background: linear-gradient(145deg, #0f2744 0%, #1b4f9c 48%, #c0267a 120%);
+  animation: rise-in 0.7s ease-out both;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(15, 39, 68, 0.28);
+}
+.service-card-shine {
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.14) 48%,
+    transparent 62%
+  );
+  transform: translateX(-120%);
+  animation: shine-sweep 5.5s ease-in-out infinite;
+}
+
+.fleet-lane {
+  animation: fleet-scroll 18s linear infinite;
+  width: max-content;
+}
+.fleet-vehicle {
+  animation: truck-bounce 1.2s ease-in-out infinite;
+}
+.fleet-vehicle:nth-child(even) {
+  animation-delay: 0.3s;
+}
+
+.bringing-banner {
+  animation: rise-in 0.7s ease-out both;
+}
+.bringing-title {
+  animation: title-glow 3.5s ease-in-out infinite;
+}
+
+.hub-card {
+  animation: rise-in 0.55s ease-out both;
+  transition: transform 0.2s ease;
+}
+.hub-card:hover {
+  transform: translateY(-3px);
+}
+
+.multi-scene {
+  animation: rise-in 0.7s ease-out both;
+}
+.multi-map {
+  animation: map-pulse 5s ease-in-out infinite;
+}
+.multi-plane {
+  animation: plane-fly 9s linear infinite;
+}
+
+.step-rise {
+  animation: rise-in 0.55s ease-out both;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.step-rise:hover {
+  transform: translateY(-3px);
+  border-color: var(--saffron);
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes courier-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes globe-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes plane-fly {
+  0% {
+    transform: translateX(-20%) translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%) translateY(-18px);
+    opacity: 0;
+  }
+}
+@keyframes parcel-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+@keyframes bag-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes truck-nudge {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-48%, -2px);
+  }
+}
+@keyframes shine-sweep {
+  0%,
+  60% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+@keyframes fleet-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes truck-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes title-glow {
+  0%,
+  100% {
+    text-shadow: 0 0 0 transparent;
+  }
+  50% {
+    text-shadow: 0 0 24px rgba(255, 103, 31, 0.45);
+  }
+}
+@keyframes map-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .route-dash,
   .route-parcel,
-  .freight-plane {
-    animation: none;
+  .freight-plane,
+  .hero-copy,
+  .hero-stage,
+  .hero-courier,
+  .hero-globe,
+  .hero-plane,
+  .parcel,
+  .bag-bob,
+  .truck-drive,
+  .stat-pop,
+  .service-card,
+  .service-card-shine,
+  .fleet-lane,
+  .fleet-vehicle,
+  .bringing-banner,
+  .bringing-title,
+  .hub-card,
+  .multi-scene,
+  .multi-map,
+  .multi-plane,
+  .step-rise {
+    animation: none !important;
+  }
+  .service-card:hover,
+  .hub-card:hover,
+  .step-rise:hover {
+    transform: none;
   }
 }
 
