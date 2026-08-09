@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { AuthSplash } from "@/components/auth/AuthSplash";
+import type { StaffProfile } from "@/lib/types";
 
 export function RequireAuth({
   children,
@@ -14,8 +15,49 @@ export function RequireAuth({
   staffOnly?: boolean;
   superAdminOnly?: boolean;
 }) {
-  const { user, staff, loading, configured } = useAuth();
+  const { user, staff, loading, configured, getIdToken } = useAuth();
   const router = useRouter();
+  const [staffGate, setStaffGate] = useState<StaffProfile | null | undefined>(
+    undefined,
+  );
+
+  const effectiveStaff = staff ?? staffGate ?? null;
+
+  useEffect(() => {
+    if (!staffOnly || loading || !configured || !user) {
+      setStaffGate(undefined);
+      return;
+    }
+    if (staff?.active) {
+      setStaffGate(staff);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const token = await getIdToken(true);
+        if (!token || cancelled) return;
+        const res = await fetch("/api/admin/session", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        if (res.ok && data.isStaff && data.staff) {
+          setStaffGate(data.staff as StaffProfile);
+        } else {
+          setStaffGate(null);
+        }
+      } catch {
+        if (!cancelled) setStaffGate(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [staffOnly, loading, configured, user, staff, getIdToken]);
 
   useEffect(() => {
     if (loading) return;
@@ -24,13 +66,27 @@ export function RequireAuth({
       router.replace(staffOnly ? "/staff-login" : "/login");
       return;
     }
-    if (staffOnly && !staff) {
-      router.replace("/dashboard");
+    if (staffOnly && staffGate === null && !staff) {
+      router.replace("/staff-login");
     }
-    if (superAdminOnly && staff?.role !== "super_admin") {
+    if (
+      superAdminOnly &&
+      effectiveStaff &&
+      effectiveStaff.role !== "super_admin"
+    ) {
       router.replace("/admin");
     }
-  }, [user, staff, loading, configured, router, staffOnly, superAdminOnly]);
+  }, [
+    user,
+    staff,
+    staffGate,
+    effectiveStaff,
+    loading,
+    configured,
+    router,
+    staffOnly,
+    superAdminOnly,
+  ]);
 
   if (!configured) {
     return (
@@ -42,16 +98,22 @@ export function RequireAuth({
   if (loading || !user) {
     return <AuthSplash message="Checking your session…" />;
   }
-  if (staffOnly && !staff) {
+  if (staffOnly && !effectiveStaff) {
+    if (staffGate === undefined && !staff) {
+      return <AuthSplash message="Checking admin access…" />;
+    }
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[color:var(--ivory)] p-8 text-sm text-[color:var(--ink)]">
-        Staff access required.
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-8 text-sm text-zinc-100">
+        Staff access required.{" "}
+        <a href="/staff-login" className="ml-2 underline">
+          Staff login
+        </a>
       </div>
     );
   }
-  if (superAdminOnly && staff?.role !== "super_admin") {
+  if (superAdminOnly && effectiveStaff?.role !== "super_admin") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[color:var(--ivory)] p-8 text-sm text-[color:var(--ink)]">
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-8 text-sm text-zinc-100">
         Super Admin only.
       </div>
     );

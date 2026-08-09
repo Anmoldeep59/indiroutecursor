@@ -10,7 +10,12 @@ export type FounderAdminResult = {
   error?: string;
 };
 
-/** Single Beta founder admin from server env — always emailVerified, no Resend. */
+/**
+ * Single Beta founder admin from server env — always emailVerified, no Resend.
+ * Password is set on create only. To reset password from env, set ADMIN_SYNC_PASSWORD=true
+ * (or run scripts/sync-founder-admin.mjs). Bootstrap must not overwrite a working password
+ * with a stale Next.js env value on every /staff-login load.
+ */
 export async function ensureFounderAdmin(): Promise<FounderAdminResult> {
   if (!isAdminConfigured()) {
     return { ok: false, error: "Firebase Admin not configured" };
@@ -20,6 +25,9 @@ export async function ensureFounderAdmin(): Promise<FounderAdminResult> {
   const password = process.env.ADMIN_PASSWORD?.trim();
   const displayName =
     process.env.ADMIN_DISPLAY_NAME?.trim() || "IndiRoute Admin";
+  const syncPassword =
+    process.env.ADMIN_SYNC_PASSWORD === "1" ||
+    process.env.ADMIN_SYNC_PASSWORD === "true";
 
   if (!email || !password) {
     return {
@@ -34,16 +42,26 @@ export async function ensureFounderAdmin(): Promise<FounderAdminResult> {
   const now = new Date().toISOString();
   let uid: string;
   let created = false;
+  let passwordSynced = false;
 
   try {
     const existing = await adminAuth().getUserByEmail(email);
     uid = existing.uid;
-    await adminAuth().updateUser(uid, {
-      password,
+    const patch: {
+      emailVerified: boolean;
+      displayName: string;
+      disabled: boolean;
+      password?: string;
+    } = {
       emailVerified: true,
       displayName,
       disabled: false,
-    });
+    };
+    if (syncPassword) {
+      patch.password = password;
+      passwordSynced = true;
+    }
+    await adminAuth().updateUser(uid, patch);
   } catch (err) {
     const code =
       typeof err === "object" && err && "code" in err
@@ -62,6 +80,7 @@ export async function ensureFounderAdmin(): Promise<FounderAdminResult> {
     });
     uid = createdUser.uid;
     created = true;
+    passwordSynced = true;
   }
 
   await adminDb()
@@ -80,7 +99,6 @@ export async function ensureFounderAdmin(): Promise<FounderAdminResult> {
       { merge: true },
     );
 
-  // Optional customer profile so ensure-profile never blocks staff
   await adminDb()
     .collection(COLLECTIONS.users)
     .doc(uid)
@@ -99,6 +117,11 @@ export async function ensureFounderAdmin(): Promise<FounderAdminResult> {
       { merge: true },
     );
 
-  console.info("[ensureFounderAdmin]", { uid, email, created });
-  return { ok: true, uid, email, created };
+  console.info("[ensureFounderAdmin]", {
+    uid,
+    email,
+    created,
+    passwordSynced,
+  });
+  return { ok: true, uid, email, created, passwordSynced };
 }

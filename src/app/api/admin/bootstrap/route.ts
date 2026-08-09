@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { ensureFounderAdmin } from "@/lib/auth/ensureFounderAdmin";
+import { getAdminInitError, isAdminConfigured } from "@/lib/firebase/admin";
+
+export const runtime = "nodejs";
 
 /**
  * Idempotent: creates/updates the single founder admin from ADMIN_EMAIL / ADMIN_PASSWORD.
@@ -7,10 +10,19 @@ import { ensureFounderAdmin } from "@/lib/auth/ensureFounderAdmin";
  */
 export async function POST() {
   try {
+    if (!isAdminConfigured()) {
+      return NextResponse.json(
+        {
+          error:
+            "Firebase Admin not configured. Set FIREBASE_ADMIN_* env vars on the host (Vercel).",
+        },
+        { status: 503 },
+      );
+    }
     const result = await ensureFounderAdmin();
     if (!result.ok) {
       return NextResponse.json(
-        { error: result.error },
+        { error: result.error, detail: getAdminInitError() },
         { status: result.error?.includes("not configured") ? 503 : 400 },
       );
     }
@@ -23,7 +35,11 @@ export async function POST() {
         : "Founder admin ready",
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Bootstrap failed";
     console.error("[admin/bootstrap]", error);
-    return NextResponse.json({ error: "Bootstrap failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: message, detail: getAdminInitError() },
+      { status: 500 },
+    );
   }
 }

@@ -153,12 +153,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubStaff = onSnapshot(
       doc(db, COLLECTIONS.staff, user.uid),
       (snap) => {
-        if (!snap.exists()) {
-          setStaff(null);
-          return;
-        }
+        // Server /api/admin/session is source of truth. Only upgrade from snapshot
+        // when a live active staff doc is readable — never clear on missing/denied.
+        if (!snap.exists()) return;
         const data = snap.data() as StaffProfile;
-        setStaff(data.active === false ? null : data);
+        if (data.active !== false) setStaff(data);
       },
       () => {
         /* permission-denied: keep server session result if any */
@@ -243,7 +242,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const auth = getClientAuth();
-    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const cred = await signInWithEmailAndPassword(
+      auth,
+      email.trim().toLowerCase(),
+      password,
+    );
     await cred.user.reload();
     const token = await cred.user.getIdToken(true);
     await fetch("/api/auth/ensure-profile", {

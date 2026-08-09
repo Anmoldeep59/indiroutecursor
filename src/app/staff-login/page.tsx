@@ -8,6 +8,37 @@ import { Alert, Button, Input, Label, Panel } from "@/components/ui/ui";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { getClientAuth } from "@/lib/firebase/client";
 
+async function fetchStaffSession(token: string) {
+  const res = await fetch("/api/admin/session", {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  const data = await res.json().catch(() => ({}));
+  return { res, data };
+}
+
+function sessionErrorMessage(res: Response, data: Record<string, unknown>) {
+  if (res.status === 503) {
+    return (
+      (data.error as string) ||
+      "Admin server is not configured. Add FIREBASE_ADMIN_* and ADMIN_* env vars on Vercel, then redeploy."
+    );
+  }
+  if (res.status === 500) {
+    return (
+      (data.error as string) ||
+      "Admin API failed on this server (500). Firebase Admin env on Vercel is likely missing or the private key is malformed. Check /api/admin/health"
+    );
+  }
+  if (res.status === 401) {
+    return "Login token was rejected. Try signing in again.";
+  }
+  return (
+    (data.error as string) ||
+    "This account is not an IndiRoute admin. Use the customer login."
+  );
+}
+
 export default function StaffLoginPage() {
   const { login, logout, configured, staff, user, loading } = useAuth();
   const router = useRouter();
@@ -39,8 +70,12 @@ export default function StaffLoginPage() {
     setError(null);
     setPending(true);
     const form = new FormData(e.currentTarget);
+    const email = String(form.get("email") || "")
+      .trim()
+      .toLowerCase();
+    const password = String(form.get("password") || "");
     try {
-      await login(String(form.get("email")), String(form.get("password")));
+      await login(email, password);
 
       const current = getClientAuth().currentUser;
       if (!current) {
@@ -48,19 +83,20 @@ export default function StaffLoginPage() {
         return;
       }
 
-      // Admin SDK session check — no client Firestore staff read required
-      const token = await current.getIdToken(true);
-      const res = await fetch("/api/admin/session", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json().catch(() => ({}));
+      await fetch("/api/admin/bootstrap", { method: "POST" }).catch(() => null);
+
+      let token = await current.getIdToken(true);
+      let { res, data } = await fetchStaffSession(token);
+
+      if ((!res.ok || !data.isStaff) && res.status !== 401) {
+        await new Promise((r) => setTimeout(r, 400));
+        token = await current.getIdToken(true);
+        ({ res, data } = await fetchStaffSession(token));
+      }
+
       if (!res.ok || !data.isStaff) {
         await logout();
-        setError(
-          data.error === "Unauthorized"
-            ? "Login failed"
-            : "This account is not an IndiRoute admin. Use the customer login.",
-        );
+        setError(sessionErrorMessage(res, data as Record<string, unknown>));
         return;
       }
 
@@ -80,6 +116,10 @@ export default function StaffLoginPage() {
         <p className="mt-2 text-sm text-zinc-400">
           Single founder admin login. No email verification code required.
         </p>
+        <p className="mt-1 text-xs text-zinc-500">
+          Local testing: use http://localhost:3000/staff-login — production needs
+          Firebase Admin env on Vercel.
+        </p>
         <Panel className="mt-6 !border-zinc-700 !bg-zinc-900 !text-zinc-100">
           <form className="space-y-3" onSubmit={onSubmit}>
             <div>
@@ -90,6 +130,7 @@ export default function StaffLoginPage() {
                 type="email"
                 required
                 autoComplete="username"
+                defaultValue="admin@indiroute.co"
                 className="!bg-white !text-[color:var(--ink)]"
               />
             </div>
