@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Input, Label, PageTitle, Panel } from "@/components/ui/ui";
+import Link from "next/link";
 import { formatAudCents } from "@/lib/format";
 
 type CalcResult = {
@@ -20,122 +20,268 @@ type CalcResult = {
 };
 
 export default function ShippingCalculatorPage() {
+  const [unit, setUnit] = useState<"kg" | "lb">("kg");
+  const [dimUnit, setDimUnit] = useState<"cm" | "in">("cm");
+  const [showDims, setShowDims] = useState(true);
+  const [weight, setWeight] = useState(0.5);
+  const [length, setLength] = useState(10);
+  const [width, setWidth] = useState(10);
+  const [height, setHeight] = useState(10);
   const [result, setResult] = useState<CalcResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function step(value: number, delta: number, min = 0.1) {
+    return Math.max(min, Math.round((value + delta) * 100) / 100);
+  }
+
+  async function calculate() {
+    setPending(true);
     setError(null);
-    const form = new FormData(e.currentTarget);
-    const res = await fetch("/api/calculator", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        country: form.get("country"),
-        postal: form.get("postal"),
-        weightKg: Number(form.get("weightKg")),
-        lengthCm: Number(form.get("lengthCm")),
-        widthCm: Number(form.get("widthCm")),
-        heightCm: Number(form.get("heightCm")),
-        packageType: form.get("packageType"),
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error || "Calculation failed");
-      return;
+    const weightKg = unit === "kg" ? weight : weight * 0.453592;
+    const toCm = (v: number) => (dimUnit === "cm" ? v : v * 2.54);
+    try {
+      const res = await fetch("/api/calculator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          country: "AU",
+          weightKg,
+          lengthCm: showDims ? toCm(length) : 10,
+          widthCm: showDims ? toCm(width) : 10,
+          heightCm: showDims ? toCm(height) : 10,
+          packageType: "parcel",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      setResult(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Calculation failed");
+    } finally {
+      setPending(false);
     }
-    setResult(data);
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12 md:px-6">
-      <PageTitle
-        title="Shipping calculator"
-        subtitle="Estimate only. Final payable quotes use warehouse-recorded weight and dimensions."
-      />
-      <Panel>
-        <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
-          <div className="sm:col-span-2">
-            <Label>Destination country</Label>
-            <select
-              name="country"
-              className="w-full rounded-md border border-[color:var(--line)] px-3 py-2 text-sm"
-              defaultValue="AU"
-            >
-              <option value="AU">Australia</option>
-              <option value="OTHER">Other (not available in Beta)</option>
-            </select>
-          </div>
-          <div>
-            <Label>Postal code</Label>
-            <Input name="postal" placeholder="e.g. 2000" />
-          </div>
-          <div>
-            <Label>Package type</Label>
-            <select
-              name="packageType"
-              className="w-full rounded-md border border-[color:var(--line)] px-3 py-2 text-sm"
-              defaultValue="parcel"
-            >
-              <option value="parcel">Parcel</option>
-              <option value="document">Document</option>
-            </select>
-          </div>
-          <div>
-            <Label>Weight (kg)</Label>
-            <Input name="weightKg" type="number" step="0.01" min="0.01" required />
-          </div>
-          <div>
-            <Label>Length (cm)</Label>
-            <Input name="lengthCm" type="number" min="1" required />
-          </div>
-          <div>
-            <Label>Width (cm)</Label>
-            <Input name="widthCm" type="number" min="1" required />
-          </div>
-          <div>
-            <Label>Height (cm)</Label>
-            <Input name="heightCm" type="number" min="1" required />
-          </div>
-          <div className="sm:col-span-2">
-            <Button type="submit">Estimate</Button>
-          </div>
-        </form>
-      </Panel>
-      {error ? <div className="mt-4"><Alert tone="danger">{error}</Alert></div> : null}
-      {result ? (
-        <Panel className="mt-4 space-y-3">
-          <Alert tone="warn">{result.disclaimer}</Alert>
-          <p className="text-sm">
-            Chargeable weight:{" "}
-            {result.chargeableWeightKg != null
-              ? `${result.chargeableWeightKg.toFixed(2)} kg`
-              : "Unavailable until volumetric divisor is configured"}
+    <div className="bg-[color:var(--wash)] py-10">
+      <div className="mx-auto grid max-w-[1140px] gap-6 px-4 md:grid-cols-[1fr_320px] md:px-5">
+        <div className="sp-card p-6 md:p-8">
+          <h1 className="text-2xl font-bold text-[#7c3aed] md:text-3xl">
+            Calculate Your International Shipping Cost
+          </h1>
+          <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
+            Estimate rates from India to Australia. Final payable quotes use warehouse
+            measurements only.
           </p>
-          {result.options?.length ? (
-            <ul className="space-y-2 text-sm">
-              {result.options.map((o) => (
-                <li key={o.serviceName} className="border-t border-[color:var(--line)] pt-2">
-                  <strong>{o.serviceName}</strong> ({o.courierName}) · ETA {o.etaDaysMin}–
-                  {o.etaDaysMax} days ·{" "}
-                  {o.shippingAudCents != null
-                    ? formatAudCents(o.shippingAudCents)
-                    : "Rate break missing"}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-[color:var(--muted)]">
-              No rate cards loaded yet. Estimates show chargeable weight only.
+
+          <div className="mt-8 space-y-6">
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-[color:var(--navy)]">
+                Where do you want to send your package to?
+              </label>
+              <select
+                className="w-full rounded-md border border-[color:var(--line)] px-3 py-3 text-sm"
+                defaultValue="AU"
+              >
+                <option value="AU">Australia</option>
+                <option value="OTHER" disabled>
+                  Other countries (not in Beta)
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <label className="text-sm font-semibold text-[color:var(--navy)]">
+                  Package Weight *
+                </label>
+                <div className="inline-flex overflow-hidden rounded-full border border-[color:var(--line)] text-xs font-bold">
+                  <button
+                    type="button"
+                    className={`px-3 py-1 ${unit === "kg" ? "bg-[color:var(--blue)] text-white" : "bg-white"}`}
+                    onClick={() => setUnit("kg")}
+                  >
+                    KG
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-3 py-1 ${unit === "lb" ? "bg-[color:var(--blue)] text-white" : "bg-white"}`}
+                    onClick={() => setUnit("lb")}
+                  >
+                    LB
+                  </button>
+                </div>
+              </div>
+              <Stepper value={weight} onChange={setWeight} stepFn={step} />
+            </div>
+
+            <label className="flex items-center gap-2 text-sm text-[color:var(--navy)]">
+              <input
+                type="checkbox"
+                checked={showDims}
+                onChange={(e) => setShowDims(e.target.checked)}
+              />
+              Add Volumetric Dimensions (Optional)
+            </label>
+
+            {showDims ? (
+              <div>
+                <div className="mb-3 inline-flex overflow-hidden rounded-full border border-[color:var(--line)] text-xs font-bold">
+                  <button
+                    type="button"
+                    className={`px-3 py-1 ${dimUnit === "cm" ? "bg-[color:var(--blue)] text-white" : "bg-white"}`}
+                    onClick={() => setDimUnit("cm")}
+                  >
+                    cm
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-3 py-1 ${dimUnit === "in" ? "bg-[color:var(--blue)] text-white" : "bg-white"}`}
+                    onClick={() => setDimUnit("in")}
+                  >
+                    in
+                  </button>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <p className="mb-1 text-xs font-semibold">Length</p>
+                    <Stepper value={length} onChange={setLength} stepFn={step} />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-semibold">Width</p>
+                    <Stepper value={width} onChange={setWidth} stepFn={step} />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-semibold">Height</p>
+                    <Stepper value={height} onChange={setHeight} stepFn={step} />
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={calculate}
+              disabled={pending}
+              className="sp-btn-orange w-full sm:w-auto"
+            >
+              {pending ? "Calculating…" : "Check Prices"}
+            </button>
+
+            {error ? (
+              <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+            ) : null}
+
+            {result ? (
+              <div className="rounded-lg border border-[color:var(--line)] bg-[color:var(--wash)] p-4 text-sm">
+                <p className="font-semibold text-amber-800">{result.disclaimer}</p>
+                <p className="mt-2">
+                  Chargeable weight:{" "}
+                  {result.chargeableWeightKg != null
+                    ? `${result.chargeableWeightKg.toFixed(2)} kg`
+                    : "Configure volumetric divisor first"}
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {result.options?.map((o) => (
+                    <li key={o.serviceName}>
+                      {o.serviceName} ({o.courierName}) · {o.etaDaysMin}-{o.etaDaysMax}d ·{" "}
+                      {o.shippingAudCents != null
+                        ? formatAudCents(o.shippingAudCents)
+                        : "Rate missing"}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs text-[color:var(--muted)]">
+                  This estimate cannot be paid. Create a quote from your dashboard after we
+                  store your package.
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <aside className="space-y-4">
+          <Link
+            href="/pricing"
+            className="block rounded-xl bg-[#d7e7ff] px-4 py-3 text-center text-sm font-bold text-[color:var(--navy)]"
+          >
+            Seller Shipping Rates
+          </Link>
+          <div className="rounded-xl bg-[#fff8e8] p-4 text-sm">
+            <Link href="/countries" className="block font-semibold text-[color:var(--blue)]">
+              Country Guide
+            </Link>
+            <Link href="/pricing" className="mt-2 block font-semibold text-[color:var(--blue)]">
+              Offers Available
+            </Link>
+          </div>
+          <div
+            className="rounded-2xl p-5 text-white"
+            style={{ background: "linear-gradient(135deg,#a21caf,#ec4899)" }}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-wider opacity-90">
+              First shipment
             </p>
-          )}
-          <p className="text-xs text-[color:var(--muted)]">
-            This estimate cannot be paid. Create a quote from your dashboard after we store
-            your package.
-          </p>
-        </Panel>
-      ) : null}
+            <p className="mt-2 text-lg font-bold">First International Shipment?</p>
+            <p className="mt-1 text-sm text-white/90">
+              Transparent AUD pricing after warehouse weigh-in. No fake promo wallet credits.
+            </p>
+            <Link href="/signup" className="mt-4 inline-block rounded-full bg-white/20 px-4 py-2 text-xs font-bold">
+              Sign up free
+            </Link>
+          </div>
+          <div
+            className="rounded-2xl p-5 text-white"
+            style={{ background: "linear-gradient(135deg,#0f766e,#06b6d4)" }}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-wider opacity-90">New user</p>
+            <p className="mt-2 text-lg font-bold">Need Help Buying from India?</p>
+            <p className="mt-1 text-sm text-white/90">
+              Assisted Purchase launches after Beta (P1). Get your locker address now.
+            </p>
+            <Link href="/assisted-purchase" className="mt-4 inline-block rounded-full bg-white/20 px-4 py-2 text-xs font-bold">
+              Learn more
+            </Link>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function Stepper({
+  value,
+  onChange,
+  stepFn,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  stepFn: (v: number, d: number) => number;
+}) {
+  return (
+    <div className="flex items-center overflow-hidden rounded-md border border-[color:var(--line)] bg-white">
+      <button
+        type="button"
+        className="px-4 py-3 text-lg font-bold text-[color:var(--navy)] hover:bg-[color:var(--wash)]"
+        onClick={() => onChange(stepFn(value, -0.1))}
+      >
+        −
+      </button>
+      <input
+        className="w-full border-x border-[color:var(--line)] py-3 text-center text-sm outline-none"
+        type="number"
+        step="0.1"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value) || 0)}
+      />
+      <button
+        type="button"
+        className="px-4 py-3 text-lg font-bold text-[color:var(--navy)] hover:bg-[color:var(--wash)]"
+        onClick={() => onChange(stepFn(value, 0.1))}
+      >
+        +
+      </button>
     </div>
   );
 }

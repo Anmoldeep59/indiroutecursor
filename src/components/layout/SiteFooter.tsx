@@ -1,14 +1,13 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 export function SiteFooter() {
   return (
     <footer className="mt-auto bg-[color:var(--navy)] text-white">
-      <div className="sp-container grid gap-10 py-14 md:grid-cols-4">
+      <div className="mx-auto grid max-w-[1140px] gap-10 px-4 py-14 md:grid-cols-4 md:px-5">
         <div className="md:col-span-1">
-          <p className="text-2xl font-bold">
-            Indi<span className="text-[color:var(--orange)]">Route</span>
-          </p>
-          <p className="mt-3 text-sm leading-relaxed text-white/70">
+          <BrandLogo href="/" />
+          <p className="mt-4 text-sm leading-relaxed text-white/70">
             Shop Indian stores and ship internationally. Personal India warehouse address,
             consolidation, and Australia delivery for Beta.
           </p>
@@ -17,9 +16,9 @@ export function SiteFooter() {
           <p className="text-sm font-semibold text-[color:var(--orange)]">Services</p>
           <ul className="mt-3 space-y-2 text-sm text-white/80">
             <li><Link href="/how-it-works" className="hover:text-[color:var(--orange)]">How it works</Link></li>
-            <li><Link href="/shipping-calculator" className="hover:text-[color:var(--orange)]">Shipping calculator</Link></li>
+            <li><Link href="/shipping-calculator" className="hover:text-[color:var(--orange)]">Shipping Rates</Link></li>
+            <li><Link href="/assisted-purchase" className="hover:text-[color:var(--orange)]">Assisted Purchase</Link></li>
             <li><Link href="/pricing" className="hover:text-[color:var(--orange)]">Pricing</Link></li>
-            <li><Link href="/countries" className="hover:text-[color:var(--orange)]">Countries</Link></li>
           </ul>
         </div>
         <div>
@@ -42,9 +41,9 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="sp-container flex flex-col gap-2 py-4 text-center text-xs text-white/55 md:flex-row md:justify-between">
+        <div className="mx-auto flex max-w-[1140px] flex-col gap-2 px-4 py-4 text-center text-xs text-white/55 md:flex-row md:justify-between md:px-5">
           <p>© {new Date().getFullYear()} IndiRoute · indiroute.co</p>
-          <p>Beta corridor: India → Australia</p>
+          <p>Beta: India → Australia · No wallet · No loyalty points</p>
         </div>
       </div>
     </footer>
