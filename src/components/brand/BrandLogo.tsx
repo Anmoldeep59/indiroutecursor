@@ -54,10 +54,10 @@ export function BrandLogo({
           </span>
           <span
             className={`block text-[10px] font-medium tracking-wide ${
-              variant === "light" ? "text-white/70" : "text-[color:var(--muted)]"
+              variant === "light" ? "text-[#7dd3fc]" : "text-[color:var(--muted)]"
             }`}
           >
-            Shop India. Ship Worldwide.
+            Delivering Happiness
           </span>
         </span>
       ) : null}

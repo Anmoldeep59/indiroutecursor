@@ -73,12 +73,11 @@ export default function ShippingCalculatorPage() {
       </div>
       <div className="mx-auto grid max-w-[1140px] gap-6 px-4 py-8 md:grid-cols-[1fr_320px] md:px-5">
         <div className="sp-card p-6 md:p-8">
-          <h1 className="text-2xl font-bold text-[color:var(--ink)] md:text-3xl">
+          <h1 className="text-2xl font-bold text-[#7c3aed] md:text-3xl">
             Calculate Your International Shipping Cost
           </h1>
           <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
-            Estimate rates from India to Australia. Final payable quotes use warehouse
-            measurements only. Shipped from Indian hubs.
+            Cheapest international shipping rates from India to Australia.
           </p>
 
           <div className="mt-8 space-y-6">
@@ -210,44 +209,44 @@ export default function ShippingCalculatorPage() {
         <aside className="space-y-4">
           <Link
             href="/pricing"
-            className="block rounded-xl border border-[color:var(--line)] bg-[color:var(--blue-soft)] px-4 py-3 text-center text-sm font-bold text-[color:var(--navy)]"
+            className="block rounded-xl bg-[color:var(--chakra)] px-4 py-3 text-center text-sm font-bold text-white"
           >
             Seller Shipping Rates
           </Link>
-          <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--accent-soft)] p-4 text-sm">
-            <Link href="/countries" className="block font-semibold text-[color:var(--chakra)]">
+          <div className="flex gap-4 rounded-lg bg-[#f5efe6] px-4 py-3 text-sm">
+            <Link href="/countries" className="font-semibold text-[color:var(--ink)] hover:underline">
               Country Guide
             </Link>
-            <Link href="/pricing" className="mt-2 block font-semibold text-[color:var(--chakra)]">
-              Pricing overview
+            <Link href="/pricing" className="font-semibold text-[color:var(--ink)] hover:underline">
+              Offers Available
             </Link>
           </div>
-          <div className="rounded-2xl bg-[color:var(--navy)] p-5 text-white">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--saffron)]">
-              Shipped from India
-            </p>
-            <p className="mt-2 text-lg font-bold">First international shipment?</p>
+          <div className="rounded-2xl bg-gradient-to-br from-[#a855f7] to-[#ec4899] p-5 text-white shadow-md">
+            <span className="inline-block rounded bg-[color:var(--navy)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+              First Shipment
+            </span>
+            <p className="mt-3 text-lg font-bold">First International Shipment?</p>
             <p className="mt-1 text-sm text-white/90">
-              Transparent AUD pricing after warehouse weigh-in. No fake promo wallet credits.
+              Transparent AUD pricing after warehouse weigh-in — no fake promo wallets.
             </p>
             <Link
               href="/signup"
-              className="sp-btn-orange mt-4 !px-4 !py-2 !text-xs !font-bold"
+              className="mt-4 inline-flex rounded-full border border-dashed border-white/60 bg-white/15 px-4 py-1.5 text-xs font-bold"
             >
               Sign up free
             </Link>
           </div>
-          <div className="rounded-2xl bg-[color:var(--india-green)] p-5 text-white">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-white/80">
-              India locker
-            </p>
-            <p className="mt-2 text-lg font-bold">Need help buying from India?</p>
+          <div className="rounded-2xl bg-gradient-to-br from-[#0d9488] to-[#38bdf8] p-5 text-white shadow-md">
+            <span className="inline-block rounded bg-[color:var(--navy)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+              New User
+            </span>
+            <p className="mt-3 text-lg font-bold">Need Help Buying from India?</p>
             <p className="mt-1 text-sm text-white/90">
-              Assisted Purchase launches after Beta (P1). Get your locker address now.
+              Assisted Purchase launches after Beta. Get your locker address now.
             </p>
             <Link
               href="/assisted-purchase"
-              className="mt-4 inline-block rounded-md bg-white/20 px-4 py-2 text-xs font-bold"
+              className="mt-4 inline-flex rounded-full border border-dashed border-white/60 bg-white/15 px-4 py-1.5 text-xs font-bold"
             >
               Learn more
             </Link>

@@ -23,9 +23,11 @@ export default function DashboardHome() {
   const [shipments, setShipments] = useState<ShipmentRecord[]>([]);
   const [addressLines, setAddressLines] = useState<string[] | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedLine, setCopiedLine] = useState<string | null>(null);
 
   const firstName =
     (profile?.displayName || user?.displayName || "there").split(" ")[0] || "there";
+  const displayName = profile?.displayName || user?.displayName || "Customer";
 
   useEffect(() => {
     void refreshVerification();
@@ -88,13 +90,13 @@ export default function DashboardHome() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         indId: profile.indId,
-        name: profile.displayName || user?.displayName || "Customer",
+        name: displayName,
       }),
     })
       .then((r) => r.json())
       .then((d) => setAddressLines(d.lines ?? null))
       .catch(() => setAddressLines(null));
-  }, [emailVerified, profile?.indId, profile?.displayName, user?.displayName]);
+  }, [emailVerified, profile?.indId, displayName]);
 
   const counts = useMemo(() => {
     const active = packages.filter((p) => !p.consolidatedIntoId);
@@ -102,14 +104,13 @@ export default function DashboardHome() {
       warehouse: active.filter((p) =>
         ["Stored", "Inspection", "Received"].includes(p.status),
       ).length,
-      action: active.filter((p) => p.status === "Action Required").length,
-      ready: active.filter((p) =>
-        ["Awaiting Payment", "Ready to Ship"].includes(p.status),
-      ).length,
       transit: shipments.filter((s) =>
         ["Shipped", "In Transit", "Customs", "Out for Delivery", "Ready to Ship"].includes(
           s.status,
         ),
+      ).length,
+      ready: active.filter((p) =>
+        ["Awaiting Payment", "Ready to Ship"].includes(p.status),
       ).length,
     };
   }, [packages, shipments]);
@@ -123,23 +124,46 @@ export default function DashboardHome() {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  async function copyLine(line: string) {
+    await navigator.clipboard.writeText(line);
+    setCopiedLine(line);
+    setTimeout(() => setCopiedLine(null), 1500);
+  }
+
+  const addressFields = addressLines
+    ? addressLines.map((line, i) => ({
+        label:
+          i === 0
+            ? "Name + IND"
+            : i === addressLines.length - 1
+              ? "Country"
+              : i === 1
+                ? "Address Line 1"
+                : i === 2
+                  ? "Address Line 2"
+                  : "City / Postal",
+        value: line,
+      }))
+    : [];
+
   return (
     <div className="space-y-4 text-[color:var(--ink)]">
       <VerificationPanel />
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
+      <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
         <div className="space-y-4">
+          {/* Welcome card */}
           <div
             id="ind-id"
-            className="scroll-mt-4 rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] p-5 shadow-sm"
+            className="scroll-mt-4 rounded-xl bg-white p-5 shadow-sm md:p-6"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-[color:var(--ink)]">
-                  Welcome, {firstName}
+                  Welcome {firstName}
                 </h1>
                 <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
-                  Your IndiRoute ID:{" "}
+                  Your Locker ID:{" "}
                   <strong className="text-[color:var(--ink)]">
                     {emailVerified && profile?.indId
                       ? profile.indId
@@ -147,66 +171,76 @@ export default function DashboardHome() {
                   </strong>
                 </p>
               </div>
-              <div className="rounded-full bg-[color:var(--wash)] px-3 py-1 text-xs font-semibold text-[color:var(--ink)]">
-                🇮🇳 → 🇦🇺 Beta
-              </div>
+              <Link
+                href="/how-it-works"
+                className="inline-flex items-center justify-center rounded-md bg-[color:var(--teal)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-95"
+              >
+                How it works
+              </Link>
             </div>
           </div>
 
+          {/* Shipment overview */}
           <div>
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--muted)]">
-              Overview
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--ink-soft)]">
+              Your Shipment Overview
             </h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                label="Packages at warehouse"
-                value={counts.warehouse}
-                href="/dashboard/packages"
+            <div className="grid gap-3 sm:grid-cols-3">
+              <OverviewCard
                 tone="green"
-              />
-              <StatCard
-                label="Awaiting action"
-                value={counts.action}
+                icon="📦"
+                value={counts.warehouse}
+                label="Packages in Locker"
+                cta="View Locker"
                 href="/dashboard/packages"
-                tone="saffron"
               />
-              <StatCard
-                label="Ready to ship"
-                value={counts.ready}
-                href="/dashboard/ship"
-                tone="navy"
-              />
-              <StatCard
-                label="In transit"
+              <OverviewCard
+                tone="salmon"
+                icon="🚚"
                 value={counts.transit}
+                label="Shipments in Transit"
+                cta="Track Now"
                 href="/dashboard/tracking"
-                tone="blue"
+              />
+              <OverviewCard
+                tone="sky"
+                icon="🛒"
+                value={counts.ready}
+                label="Ready to Ship"
+                cta="Create Order"
+                href="/dashboard/ship"
               />
             </div>
           </div>
 
-          <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] p-5 shadow-sm">
+          {/* Recent packages / locker preview */}
+          <div className="rounded-xl bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-[color:var(--muted)]">
-                Recent packages
+              <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-[color:var(--ink-soft)]">
+                Locker
               </h2>
               <Link
                 href="/dashboard/packages"
                 className="text-sm font-semibold text-[color:var(--chakra)] hover:underline"
               >
-                View locker
+                View all
               </Link>
             </div>
             <ul className="mt-4 space-y-3">
               {recent.length === 0 ? (
-                <li className="rounded-lg bg-[color:var(--wash)] px-4 py-6 text-center text-sm text-[color:var(--ink-soft)]">
-                  No packages yet. Shop Indian stores and ship to your IndiRoute address.
+                <li className="flex flex-col items-center justify-center rounded-lg bg-[color:var(--wash)] px-4 py-10 text-center">
+                  <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#fff3cd] text-4xl">
+                    📭
+                  </div>
+                  <p className="text-sm text-[color:var(--ink-soft)]">
+                    No packages yet. Shop Indian stores and ship to your IndiRoute address.
+                  </p>
                 </li>
               ) : (
                 recent.map((pkg) => (
                   <li
                     key={pkg.id}
-                    className="flex items-center justify-between gap-3 border-t border-[color:var(--line)] pt-3 text-sm"
+                    className="flex items-center justify-between gap-3 border-t border-[color:var(--line)] pt-3 text-sm first:border-0 first:pt-0"
                   >
                     <div>
                       <Link
@@ -227,36 +261,18 @@ export default function DashboardHome() {
               )}
             </ul>
           </div>
-
-          <div>
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--muted)]">
-              Quick actions
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { href: "/dashboard/ship", label: "Ship package" },
-                { href: "/dashboard/consolidate", label: "Consolidate" },
-                { href: "/dashboard/tracking", label: "Tracking" },
-                { href: "/dashboard/support", label: "Support" },
-              ].map((a) => (
-                <Link
-                  key={a.href}
-                  href={a.href}
-                  className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] px-4 py-4 text-sm font-semibold text-[color:var(--ink)] shadow-sm hover:border-[color:var(--saffron)]"
-                >
-                  {a.label} →
-                </Link>
-              ))}
-            </div>
-          </div>
         </div>
 
+        {/* Indian Virtual Address panel */}
         <aside
           id="warehouse"
-          className="scroll-mt-4 overflow-hidden rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] shadow-sm"
+          className="scroll-mt-4 overflow-hidden rounded-xl bg-white shadow-sm"
         >
-          <div className="bg-[color:var(--india-green)] px-4 py-3 text-center text-sm font-bold text-white">
-            Your India warehouse address
+          <div className="relative bg-[color:var(--teal)] px-4 py-3 text-center text-sm font-bold text-white">
+            <span className="absolute -left-1 top-2 rotate-[-12deg] rounded bg-red-600 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-white shadow">
+              New Address
+            </span>
+            Your Indian Virtual Address
           </div>
           <div className="space-y-3 p-4">
             {!emailVerified ? (
@@ -269,17 +285,30 @@ export default function DashboardHome() {
                   type="button"
                   disabled={!addressLines}
                   onClick={copyAll}
-                  className="sp-btn-orange w-full !px-3 !py-3 !text-sm !font-bold"
+                  className="sp-btn-orange w-full !rounded-md !px-3 !py-3 !text-sm !font-bold !text-white disabled:opacity-50"
                 >
                   {copied ? "Copied!" : "Copy Full Address"}
                 </button>
-                {addressLines ? (
-                  addressLines.map((line) => (
-                    <div
-                      key={line}
-                      className="rounded-md border border-[color:var(--line)] bg-[color:var(--ivory)] px-3 py-2 text-sm text-[color:var(--ink)]"
-                    >
-                      {line}
+                {addressFields.length > 0 ? (
+                  addressFields.map((f) => (
+                    <div key={f.label + f.value}>
+                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
+                        {f.label}
+                      </p>
+                      <div className="flex items-center gap-2 rounded-md border border-[color:var(--line)] bg-[color:var(--wash)] px-3 py-2">
+                        <p className="min-w-0 flex-1 truncate text-sm text-[color:var(--ink)]">
+                          {f.value}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => copyLine(f.value)}
+                          className="shrink-0 text-[color:var(--muted)] hover:text-[color:var(--ink)]"
+                          title="Copy"
+                          aria-label={`Copy ${f.label}`}
+                        >
+                          {copiedLine === f.value ? "✓" : "⧉"}
+                        </button>
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -299,30 +328,40 @@ export default function DashboardHome() {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  href,
+function OverviewCard({
   tone,
+  icon,
+  value,
+  label,
+  cta,
+  href,
 }: {
-  label: string;
+  tone: "green" | "salmon" | "sky";
+  icon: string;
   value: number;
+  label: string;
+  cta: string;
   href: string;
-  tone: "green" | "saffron" | "navy" | "blue";
 }) {
   const bg = {
-    green: "bg-[color:var(--india-green)] text-white",
-    saffron: "bg-[color:var(--saffron)] text-[#0a1b30]",
-    navy: "bg-[color:var(--navy)] text-white",
-    blue: "bg-[color:var(--chakra)] text-white",
+    green: "dash-card-green",
+    salmon: "dash-card-salmon",
+    sky: "dash-card-sky",
   }[tone];
+
   return (
-    <Link
-      href={href}
-      className={`rounded-xl ${bg} p-4 shadow-sm transition hover:opacity-95`}
-    >
-      <p className="text-[11px] font-bold uppercase tracking-wide opacity-90">{label}</p>
-      <p className="mt-2 text-3xl font-extrabold">{value}</p>
-    </Link>
+    <div className={`rounded-xl ${bg} p-5 text-white shadow-sm`}>
+      <div className="text-3xl" aria-hidden>
+        {icon}
+      </div>
+      <p className="mt-3 text-4xl font-extrabold leading-none">{value}</p>
+      <p className="mt-2 text-xs font-bold uppercase tracking-wide opacity-95">{label}</p>
+      <Link
+        href={href}
+        className="mt-4 inline-flex rounded-md bg-[#3b82c4] px-3 py-2 text-xs font-bold uppercase tracking-wide text-white hover:opacity-95"
+      >
+        {cta}
+      </Link>
+    </div>
   );
 }

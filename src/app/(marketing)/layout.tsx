@@ -33,7 +33,7 @@ export default function MarketingLayout({
   }
 
   return (
-    <div className="flex min-h-full max-w-[100vw] flex-col overflow-x-clip bg-[color:var(--ivory)] text-[color:var(--ink)]">
+    <div className="flex min-h-full max-w-[100vw] flex-col overflow-x-clip bg-[color:var(--wash)] text-[color:var(--ink)]">
       <SiteHeader />
       <main className="min-w-0 flex-1">{children}</main>
       <SiteFooter />
