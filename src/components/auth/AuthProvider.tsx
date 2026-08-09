@@ -30,9 +30,12 @@ import {
   isFirebaseClientConfigured,
 } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
-import { emailActionCodeSettings } from "@/lib/auth/actionCode";
+import { passwordResetActionCodeSettings } from "@/lib/auth/actionCode";
 import { authErrorMessage } from "@/lib/auth/errors";
 import type { StaffProfile, UserProfile } from "@/lib/types";
+
+// IMPORTANT: Do not import sendEmailVerification / applyActionCode / checkActionCode.
+// Manual signup verification is Resend-only via /api/auth/send-verification.
 
 type AuthContextValue = {
   configured: boolean;
@@ -60,7 +63,13 @@ const RESEND_COOLDOWN_MS = 60_000;
 async function callSendVerification(
   idToken: string,
   displayName: string,
-): Promise<{ ok: boolean; message?: string; error?: string; cooldownSeconds?: number }> {
+): Promise<{
+  ok: boolean;
+  message?: string;
+  error?: string;
+  cooldownSeconds?: number;
+  messageId?: string;
+}> {
   const res = await fetch("/api/auth/send-verification", {
     method: "POST",
     headers: {
@@ -77,7 +86,10 @@ async function callSendVerification(
       cooldownSeconds: data.cooldownSeconds,
     };
   }
-  return { ok: true, message: data.message };
+  if (data.messageId) {
+    console.info("[auth] Resend message ID", data.messageId);
+  }
+  return { ok: true, message: data.message, messageId: data.messageId };
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -120,14 +132,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubUser = onSnapshot(doc(db, COLLECTIONS.users, user.uid), (snap) => {
       setProfile(snap.exists() ? (snap.data() as UserProfile) : null);
     });
-    const unsubStaff = onSnapshot(doc(db, COLLECTIONS.staff, user.uid), (snap) => {
-      if (!snap.exists()) {
-        setStaff(null);
-        return;
+    // Prefer server session for staff (avoids client rules gaps); keep snapshot as live update
+    void (async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch("/api/admin/session", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.isStaff && data.staff) {
+          setStaff(data.staff as StaffProfile);
+        } else if (res.ok) {
+          setStaff(null);
+        }
+      } catch {
+        /* snapshot below may still populate */
       }
-      const data = snap.data() as StaffProfile;
-      setStaff(data.active === false ? null : data);
-    });
+    })();
+
+    const unsubStaff = onSnapshot(
+      doc(db, COLLECTIONS.staff, user.uid),
+      (snap) => {
+        if (!snap.exists()) {
+          setStaff(null);
+          return;
+        }
+        const data = snap.data() as StaffProfile;
+        setStaff(data.active === false ? null : data);
+      },
+      () => {
+        /* permission-denied: keep server session result if any */
+      },
+    );
     return () => {
       unsubUser();
       unsubStaff();
@@ -195,14 +231,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
     if (!send.ok) {
-      // Account + profile exist; user can resend from dashboard
+      // Account + profile exist; never fall back to Firebase verification email
       console.error("[auth] Resend verification failed after signup", send.error);
       throw new Error(
         send.error ||
-          "Account created, but verification email failed. Open the dashboard and tap Resend.",
+          "Account created, but Resend verification email failed. Open the dashboard and tap Resend.",
       );
     }
-    console.info("[auth] Resend verification email requested for", cred.user.email);
+    console.info("[auth] Resend verification email sent for", cred.user.email, send.message);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -335,10 +371,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const resetPassword = useCallback(async (email: string) => {
     try {
+      // Password reset stays Firebase-managed (not email verification)
       await sendPasswordResetEmail(
         getClientAuth(),
         email,
-        emailActionCodeSettings("/login?reset=1"),
+        passwordResetActionCodeSettings("/login?reset=1"),
       );
       console.info("[auth] password reset email requested for", email);
     } catch (err) {

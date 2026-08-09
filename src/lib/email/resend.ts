@@ -1,6 +1,8 @@
 import { Resend } from "resend";
 import { getFounderSettings } from "@/lib/config/founder-settings";
 
+const DEFAULT_FROM = "IndiRoute <no-reply@indiroute.co>";
+
 let resend: Resend | null = null;
 
 function getResend(): Resend | null {
@@ -29,25 +31,83 @@ export type EmailEvent =
   | "package_opened"
   | "damaged_exception";
 
+function formatResendError(error: unknown): string {
+  if (!error || typeof error !== "object") return "Resend send failed";
+  const e = error as { message?: string; name?: string; statusCode?: number };
+  const message = e.message || "Resend send failed";
+  const lower = message.toLowerCase();
+  if (
+    lower.includes("domain") ||
+    lower.includes("not verified") ||
+    lower.includes("from address") ||
+    lower.includes("invalid `from`")
+  ) {
+    return (
+      `Resend sender/domain not verified for ${DEFAULT_FROM}. ` +
+      `Verify indiroute.co in the Resend dashboard. Details: ${message}`
+    );
+  }
+  return message;
+}
+
 export async function sendTransactionalEmail(input: {
   to: string;
   event: EmailEvent;
   subject: string;
   html: string;
-}): Promise<{ ok: boolean; skipped?: boolean; id?: string }> {
+  /** Override From; verification always uses IndiRoute no-reply */
+  from?: string;
+}): Promise<{ ok: boolean; skipped?: boolean; id?: string; error?: string }> {
   const client = getResend();
   if (!client) {
-    console.info("[email:skipped]", input.event, input.to, input.subject);
-    return { ok: true, skipped: true };
+    console.error("[email] RESEND_API_KEY missing — refusing send", {
+      event: input.event,
+      to: input.to,
+    });
+    return {
+      ok: false,
+      skipped: true,
+      error:
+        "Email delivery is not configured (RESEND_API_KEY). Add it to server env and retry.",
+    };
   }
+
   const settings = getFounderSettings();
+  const from =
+    input.event === "verify_email"
+      ? DEFAULT_FROM
+      : input.from || settings.resendFromEmail || DEFAULT_FROM;
+
   const result = await client.emails.send({
-    from: settings.resendFromEmail,
+    from,
     to: input.to,
     subject: input.subject,
     html: input.html,
   });
-  return { ok: !result.error, id: result.data?.id };
+
+  if (result.error) {
+    const error = formatResendError(result.error);
+    console.error("[email] Resend API error", {
+      event: input.event,
+      to: input.to,
+      from,
+      error: result.error,
+    });
+    return { ok: false, error };
+  }
+
+  const id = result.data?.id;
+  // Always log message ID for verification; all events in development
+  if (input.event === "verify_email" || process.env.NODE_ENV === "development") {
+    console.info("[email] Resend message ID", {
+      event: input.event,
+      id: id ?? null,
+      to: input.to,
+      from,
+    });
+  }
+
+  return { ok: true, id };
 }
 
 export function emailShell(title: string, bodyHtml: string): string {

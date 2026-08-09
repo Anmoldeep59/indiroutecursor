@@ -2,14 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Alert, Button, Input, Label, Panel } from "@/components/ui/ui";
 import { authErrorMessage } from "@/lib/auth/errors";
-import { getClientAuth, getClientDb } from "@/lib/firebase/client";
-import { COLLECTIONS } from "@/lib/firebase/collections";
-import type { StaffProfile } from "@/lib/types";
+import { getClientAuth } from "@/lib/firebase/client";
 
 export default function StaffLoginPage() {
   const { login, logout, configured, staff, user, loading } = useAuth();
@@ -18,13 +15,12 @@ export default function StaffLoginPage() {
   const [pending, setPending] = useState(false);
   const [bootstrapped, setBootstrapped] = useState(false);
 
-  // Ensure single founder admin exists (emailVerified, no OTP / verification code)
   useEffect(() => {
     void (async () => {
       try {
         await fetch("/api/admin/bootstrap", { method: "POST" });
       } catch {
-        /* ignore — login still works if already bootstrapped */
+        /* ignore */
       } finally {
         setBootstrapped(true);
       }
@@ -46,21 +42,28 @@ export default function StaffLoginPage() {
     try {
       await login(String(form.get("email")), String(form.get("password")));
 
-      const uid = getClientAuth().currentUser?.uid;
-      if (!uid) {
+      const current = getClientAuth().currentUser;
+      if (!current) {
         setError("Login failed");
         return;
       }
 
-      const snap = await getDoc(doc(getClientDb(), COLLECTIONS.staff, uid));
-      const profile = snap.exists() ? (snap.data() as StaffProfile) : null;
-      if (!profile?.active) {
+      // Admin SDK session check — no client Firestore staff read required
+      const token = await current.getIdToken(true);
+      const res = await fetch("/api/admin/session", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.isStaff) {
         await logout();
-        setError("This account is not an IndiRoute admin. Use the customer login.");
+        setError(
+          data.error === "Unauthorized"
+            ? "Login failed"
+            : "This account is not an IndiRoute admin. Use the customer login.",
+        );
         return;
       }
 
-      // No email verification code for admin — go straight to panel
       router.replace("/admin");
     } catch (err) {
       setError(authErrorMessage(err, "Login failed"));

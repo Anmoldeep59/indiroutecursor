@@ -70,13 +70,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({
+    const payload: Record<string, unknown> = {
       ok: true,
       skipped: result.skipped ?? false,
       message: result.skipped
         ? "Email already verified"
-        : "Verification email sent. Check your inbox and spam folder.",
-    });
+        : "Verification email sent via Resend. Check your inbox and spam folder.",
+      provider: "resend",
+    };
+    // Surface Resend message ID in development for delivery proof
+    if (process.env.NODE_ENV === "development" && result.messageId) {
+      payload.messageId = result.messageId;
+      console.info("[send-verification] Resend message ID", result.messageId);
+    }
+
+    return NextResponse.json(payload);
   } catch (error) {
     console.error("[send-verification] failed", error);
     return NextResponse.json(

@@ -131,7 +131,7 @@ async function bumpRateLimit(uid: string): Promise<void> {
 }
 
 export type SendVerificationResult =
-  | { ok: true; skipped?: boolean }
+  | { ok: true; skipped?: boolean; messageId?: string | null }
   | { ok: false; error: string; status: number; cooldownSeconds?: number };
 
 /**
@@ -224,28 +224,31 @@ export async function sendCustomVerificationEmail(input: {
     html,
   });
 
-  if (!sent.ok || sent.skipped) {
-    console.error("[verify-email] Resend failed or skipped", {
+  if (!sent.ok || sent.skipped || !sent.id) {
+    console.error("[verify-email] Resend failed — not falling back to Firebase", {
       uid: input.uid,
       email,
       skipped: sent.skipped,
+      error: sent.error,
     });
     return {
       ok: false,
-      error: "Could not send verification email. Try again shortly.",
-      status: 502,
+      error:
+        sent.error ||
+        "Could not send verification email via Resend. Try again shortly.",
+      status: sent.skipped ? 503 : 502,
     };
   }
 
   await bumpRateLimit(input.uid);
 
-  console.info("[verify-email] sent", {
+  console.info("[verify-email] Resend sent", {
     uid: input.uid,
     email,
-    messageId: sent.id ?? null,
+    messageId: sent.id,
   });
 
-  return { ok: true };
+  return { ok: true, messageId: sent.id };
 }
 
 export type ConfirmVerificationResult =
