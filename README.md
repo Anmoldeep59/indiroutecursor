@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# IndiRoute (Beta)
 
-## Getting Started
+India → Australia parcel forwarding. Built from the **IndiRoute Frozen Beta Specification**.
 
-First, run the development server:
+**Stack:** Next.js · Tailwind · Firebase Auth · Cloud Firestore · Stripe (AUD) · Resend · Vercel
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Hard rules
+
+- No customer wallet / balance / credit ledger
+- Payable quotes use warehouse measurements only (48h expiry)
+- Checkout currency: AUD; admin sell-rate cards; no live FX
+- Assisted Purchase, public tracking, courier APIs: **not in Beta**
+- Storage: 20 free calendar days from `Stored`, then ₹100/package/day
+- Packages are not routinely opened
+
+## Setup
+
+1. Copy `.env.example` → `.env.local` and fill Firebase, Stripe, Resend, and **founder inputs**.
+2. See [`FOUNDER_INPUTS.md`](./FOUNDER_INPUTS.md) for launch blockers.
+3. Deploy `firestore.rules` and `storage.rules`.
+4. Bootstrap a Super Admin: create Firebase Auth user, then create Firestore `staff/{uid}`:
+
+```json
+{
+  "uid": "<uid>",
+  "email": "ops@indiroute.co",
+  "displayName": "Ops",
+  "role": "super_admin",
+  "active": true,
+  "createdAt": "<iso>",
+  "updatedAt": "<iso>"
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. `npm install` · `npm run dev`
+6. Configure Stripe webhook → `POST /api/webhooks/stripe` (`checkout.session.completed`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev` — local app
+- `npm run build` — production build
+- `npm run lint` — ESLint
 
-## Learn More
+## Key routes
 
-To learn more about Next.js, take a look at the following resources:
+| Area | Path |
+|------|------|
+| Marketing | `/`, `/how-it-works`, `/pricing`, `/shipping-calculator`, … |
+| Customer | `/dashboard/*` |
+| Staff login | `/staff-login` |
+| Admin | `/admin/*` |
+| Stripe webhook | `/api/webhooks/stripe` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Not in Beta
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Assisted Purchase · public tracking · courier API booking · live FX · non-AU checkout · wallets · auto-disposal jobs

@@ -1,0 +1,20 @@
+/** Firestore collection names — conceptual domains from Frozen Spec §8 */
+export const COLLECTIONS = {
+  users: "users",
+  staff: "staff",
+  packages: "packages",
+  consolidations: "consolidations",
+  quotes: "shippingQuotes",
+  shipments: "shipments",
+  payments: "payments",
+  refunds: "refunds",
+  invoices: "invoices",
+  notifications: "notifications",
+  supportTickets: "supportTickets",
+  rateCards: "rateCards",
+  deliveryAddresses: "deliveryAddresses",
+  auditLogs: "auditLogs",
+  settings: "settings",
+  indIndex: "indIndex",
+  contactMessages: "contactMessages",
+} as const;

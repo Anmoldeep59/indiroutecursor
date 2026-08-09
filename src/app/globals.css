@@ -1,26 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #eef3f0;
+  --foreground: #142822;
+  --ink: #142822;
+  --ink-soft: #3d524a;
+  --muted: #6a7d75;
+  --surface: #fbfdfc;
+  --wash: #e4ece8;
+  --line: #c9d6d0;
+  --accent: #0f6b4c;
+  --accent-deep: #0a4d37;
+  --accent-soft: #d7efe6;
+  --saffron: #d97706;
+  --cream: #f7faf8;
+  --cream-muted: #b7c4be;
+  --hero-a: #0f3d32;
+  --hero-b: #1f6f56;
+  --hero-c: #c4a35a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(196, 163, 90, 0.18), transparent 55%),
+    radial-gradient(900px 500px at 90% 0%, rgba(15, 107, 76, 0.12), transparent 50%),
+    linear-gradient(180deg, #eef3f0 0%, #e7efe9 40%, #f4f7f5 100%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), Georgia, serif;
+  min-height: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
 }

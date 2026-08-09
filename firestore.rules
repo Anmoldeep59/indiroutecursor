@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    function staffDoc() {
+      return get(/databases/$(database)/documents/staff/$(request.auth.uid));
+    }
+    function isStaff() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/staff/$(request.auth.uid))
+        && staffDoc().data.active == true;
+    }
+    function isSuperAdmin() {
+      return isStaff() && staffDoc().data.role == 'super_admin';
+    }
+
+    // Customers may read own profile; privileged fields (indId) written only by Admin SDK
+    match /users/{uid} {
+      allow read: if isSelf(uid) || isStaff();
+      allow create, update, delete: if false;
+    }
+
+    match /staff/{uid} {
+      allow read: if isSelf(uid) || isSuperAdmin();
+      allow write: if false;
+    }
+
+    match /packages/{id} {
+      allow read: if isStaff() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /consolidations/{id} {
+      allow read: if isStaff() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /shippingQuotes/{id} {
+      allow read: if isStaff() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /shipments/{id} {
+      allow read: if isStaff() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /payments/{id} {
+      allow read: if isStaff() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /invoices/{id} {
+      allow read: if isStaff() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /refunds/{id} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    match /notifications/{id} {
+      allow read: if isStaff() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /supportTickets/{id} {
+      allow read: if isStaff() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /deliveryAddresses/{id} {
+      allow read: if isStaff() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.country == 'AU';
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /rateCards/{id} {
+      allow read: if isStaff() || isSignedIn();
+      allow write: if false;
+    }
+
+    match /auditLogs/{id} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    match /indIndex/{id} {
+      allow read, write: if false;
+    }
+
+    match /settings/{id} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
+    match /contactMessages/{id} {
+      allow read, write: if false;
+    }
+  }
+}
