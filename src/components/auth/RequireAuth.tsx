@@ -15,7 +15,7 @@ export function RequireAuth({
   staffOnly?: boolean;
   superAdminOnly?: boolean;
 }) {
-  const { user, staff, loading, configured, getIdToken } = useAuth();
+  const { user, staff, loading, configured, getIdToken, needsOtp } = useAuth();
   const router = useRouter();
   const [staffGate, setStaffGate] = useState<StaffProfile | null | undefined>(
     undefined,
@@ -66,6 +66,11 @@ export function RequireAuth({
       router.replace(staffOnly ? "/staff-login" : "/login");
       return;
     }
+    // Password accounts must complete Resend OTP before customer dashboard
+    if (!staffOnly && needsOtp) {
+      router.replace("/verify-otp");
+      return;
+    }
     if (staffOnly && staffGate === null && !staff) {
       router.replace("/staff-login");
     }
@@ -81,6 +86,7 @@ export function RequireAuth({
     staff,
     staffGate,
     effectiveStaff,
+    needsOtp,
     loading,
     configured,
     router,
@@ -97,6 +103,9 @@ export function RequireAuth({
   }
   if (loading || !user) {
     return <AuthSplash message="Checking your session…" />;
+  }
+  if (!staffOnly && needsOtp) {
+    return <AuthSplash message="Email verification required…" />;
   }
   if (staffOnly && !effectiveStaff) {
     if (staffGate === undefined && !staff) {

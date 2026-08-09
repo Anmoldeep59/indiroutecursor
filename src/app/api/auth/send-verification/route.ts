@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       skipped: result.skipped ?? false,
       message: result.skipped
         ? "Email already verified"
-        : "Verification email sent via Resend. Check your inbox and spam folder.",
+        : "Verification code sent via Resend. Enter the 6-digit OTP to continue.",
       provider: "resend",
     };
     // Surface Resend message ID in development for delivery proof

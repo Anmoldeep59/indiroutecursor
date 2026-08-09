@@ -31,11 +31,11 @@ import {
 } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { passwordResetActionCodeSettings } from "@/lib/auth/actionCode";
-import { authErrorMessage } from "@/lib/auth/errors";
+import { needsResendOtp } from "@/lib/auth/providers";
 import type { StaffProfile, UserProfile } from "@/lib/types";
 
 // IMPORTANT: Do not import sendEmailVerification / applyActionCode / checkActionCode.
-// Manual signup verification is Resend-only via /api/auth/send-verification.
+// Email/password verification is Resend OTP only via /api/auth/send-verification.
 
 type AuthContextValue = {
   configured: boolean;
@@ -51,7 +51,9 @@ type AuthContextValue = {
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   resendVerification: () => Promise<void>;
+  confirmOtp: (code: string) => Promise<void>;
   refreshVerification: () => Promise<boolean>;
+  needsOtp: boolean;
   resetPassword: (email: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 };
@@ -82,12 +84,12 @@ async function callSendVerification(
   if (!res.ok) {
     return {
       ok: false,
-      error: data.error || "Could not send verification email",
+      error: data.error || "Could not send verification code",
       cooldownSeconds: data.cooldownSeconds,
     };
   }
   if (data.messageId) {
-    console.info("[auth] Resend message ID", data.messageId);
+    console.info("[auth] Resend OTP message ID", data.messageId);
   }
   return { ok: true, message: data.message, messageId: data.messageId };
 }
@@ -221,7 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("[auth] ensure-profile after signup failed", data);
     }
 
-    // Custom Resend verification — NOT Firebase sendEmailVerification
+    // Resend OTP — NOT Firebase sendEmailVerification
     const send = await callSendVerification(token, name);
     lastResendAt.current = Date.now();
     try {
@@ -230,14 +232,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
     if (!send.ok) {
-      // Account + profile exist; never fall back to Firebase verification email
-      console.error("[auth] Resend verification failed after signup", send.error);
+      console.error("[auth] Resend OTP failed after signup", send.error);
       throw new Error(
         send.error ||
-          "Account created, but Resend verification email failed. Open the dashboard and tap Resend.",
+          "Account created, but Resend OTP failed. Open verification and tap Resend code.",
       );
     }
-    console.info("[auth] Resend verification email sent for", cred.user.email, send.message);
+    console.info("[auth] Resend OTP sent for", cred.user.email, send.messageId || send.message);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -257,6 +258,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       body: JSON.stringify({ displayName: cred.user.displayName ?? "" }),
     });
+    // Unverified password users get a fresh Resend OTP before dashboard
+    if (!cred.user.emailVerified) {
+      const send = await callSendVerification(token, cred.user.displayName ?? "");
+      lastResendAt.current = Date.now();
+      try {
+        sessionStorage.setItem("ir_verify_resend_at", String(lastResendAt.current));
+      } catch {
+        /* ignore */
+      }
+      if (!send.ok && !send.cooldownSeconds) {
+        console.error("[auth] Resend OTP failed after login", send.error);
+      }
+    }
   }, []);
 
   /** Google Sign-In — verified by Google; no Resend verification email */
@@ -303,7 +317,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (send.cooldownSeconds) {
         throw new Error(`Resend available in ${send.cooldownSeconds} seconds`);
       }
-      throw new Error(send.error || "Could not resend verification email");
+      throw new Error(send.error || "Could not resend verification code");
     }
     lastResendAt.current = Date.now();
     try {
@@ -311,7 +325,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* ignore */
     }
-    console.info("[auth] Resend verification email resent to", current.email);
+    console.info("[auth] Resend OTP resent to", current.email, send.messageId);
+  }, []);
+
+  const confirmOtp = useCallback(async (code: string) => {
+    const auth = getClientAuth();
+    const current = auth.currentUser;
+    if (!current) throw new Error("Not signed in");
+    const token = await current.getIdToken(true);
+    const res = await fetch("/api/auth/confirm-otp", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ code }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || "Incorrect verification code");
+    }
+    await current.reload();
+    await current.getIdToken(true);
+    setUser(auth.currentUser);
+    await fetch("/api/auth/ensure-profile", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${await current.getIdToken(true)}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ displayName: current.displayName ?? "" }),
+    }).then(async (r) => {
+      const body = await r.json().catch(() => ({}));
+      if (r.ok && body.profile) setProfile(body.profile as UserProfile);
+    });
   }, []);
 
   const refreshVerification = useCallback(async () => {
@@ -398,6 +445,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const emailVerified = Boolean(user?.emailVerified || profile?.emailVerified);
+  const needsOtp = needsResendOtp(user, emailVerified);
 
   const value = useMemo(
     () => ({
@@ -407,6 +455,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       staff,
       loading,
       emailVerified,
+      needsOtp,
       getIdToken,
       ensureProfile,
       signup,
@@ -414,6 +463,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginWithGoogle,
       logout,
       resendVerification,
+      confirmOtp,
       refreshVerification,
       resetPassword,
       changePassword,
@@ -425,6 +475,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       staff,
       loading,
       emailVerified,
+      needsOtp,
       getIdToken,
       ensureProfile,
       signup,
@@ -432,6 +483,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginWithGoogle,
       logout,
       resendVerification,
+      confirmOtp,
       refreshVerification,
       resetPassword,
       changePassword,

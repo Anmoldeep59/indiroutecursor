@@ -30,14 +30,15 @@ export default function SignupPage() {
         String(form.get("password")),
         String(form.get("name")),
       );
-      router.replace("/dashboard");
+      // Email/password → Resend OTP gate before dashboard
+      router.replace("/verify-otp");
     } catch (err) {
       console.error("[signup]", err);
       setError(authErrorMessage(err, "Signup failed"));
-      // Partial success (account created, email send failed) → still enter app
+      // Partial success (account created) → still go to OTP page
       try {
         const { getClientAuth } = await import("@/lib/firebase/client");
-        if (getClientAuth().currentUser) router.replace("/dashboard");
+        if (getClientAuth().currentUser) router.replace("/verify-otp");
       } catch {
         /* stay on signup */
       }
@@ -68,7 +69,7 @@ export default function SignupPage() {
           <div className="mt-8 rounded-xl bg-[color:var(--surface)] p-6 text-[color:var(--ink)] shadow-xl">
             <h1 className="text-2xl font-bold text-[color:var(--ink)]">Get your India address</h1>
             <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
-              Free signup · Verify email · Shop India · Ship to Australia 🇦🇺
+              Free signup · Resend OTP verify · Shop India · Ship to Australia 🇦🇺
             </p>
             <form className="mt-6 space-y-4" onSubmit={onSubmit}>
               <div>

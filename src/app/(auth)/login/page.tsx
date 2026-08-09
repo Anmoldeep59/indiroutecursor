@@ -23,7 +23,15 @@ function LoginForm() {
     const form = new FormData(e.currentTarget);
     try {
       await login(String(form.get("email")), String(form.get("password")));
-      router.replace("/dashboard");
+      const { getClientAuth } = await import("@/lib/firebase/client");
+      const current = getClientAuth().currentUser;
+      await current?.reload();
+      // Password accounts must pass Resend OTP before dashboard
+      if (current && !current.emailVerified) {
+        router.replace("/verify-otp");
+      } else {
+        router.replace("/dashboard");
+      }
     } catch (err) {
       console.error("[login]", err);
       setError(authErrorMessage(err, "Login failed"));
@@ -37,6 +45,7 @@ function LoginForm() {
     setError(null);
     try {
       await loginWithGoogle();
+      // Google is verified by Firebase/Google — no Resend OTP
       router.replace("/dashboard");
     } catch (err) {
       console.error("[google-login]", err);
