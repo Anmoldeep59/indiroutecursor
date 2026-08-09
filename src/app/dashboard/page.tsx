@@ -269,7 +269,7 @@ export default function DashboardHome() {
                   type="button"
                   disabled={!addressLines}
                   onClick={copyAll}
-                  className="flex w-full items-center justify-center gap-2 rounded-md bg-[color:var(--saffron)] px-3 py-3 text-sm font-bold text-white disabled:opacity-50"
+                  className="sp-btn-orange w-full !px-3 !py-3 !text-sm !font-bold"
                 >
                   {copied ? "Copied!" : "Copy Full Address"}
                 </button>
@@ -311,18 +311,18 @@ function StatCard({
   tone: "green" | "saffron" | "navy" | "blue";
 }) {
   const bg = {
-    green: "bg-[color:var(--india-green)]",
-    saffron: "bg-[color:var(--saffron)]",
-    navy: "bg-[color:var(--navy)]",
-    blue: "bg-[color:var(--chakra)]",
+    green: "bg-[color:var(--india-green)] text-white",
+    saffron: "bg-[color:var(--saffron)] text-[#0a1b30]",
+    navy: "bg-[color:var(--navy)] text-white",
+    blue: "bg-[color:var(--chakra)] text-white",
   }[tone];
   return (
     <Link
       href={href}
-      className={`rounded-xl ${bg} p-4 text-white shadow-sm transition hover:opacity-95`}
+      className={`rounded-xl ${bg} p-4 shadow-sm transition hover:opacity-95`}
     >
-      <p className="text-[11px] font-bold uppercase tracking-wide text-white/90">{label}</p>
-      <p className="mt-2 text-3xl font-extrabold text-white">{value}</p>
+      <p className="text-[11px] font-bold uppercase tracking-wide opacity-90">{label}</p>
+      <p className="mt-2 text-3xl font-extrabold">{value}</p>
     </Link>
   );
 }

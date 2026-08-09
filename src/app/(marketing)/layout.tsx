@@ -33,9 +33,9 @@ export default function MarketingLayout({
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[color:var(--ivory)] text-[color:var(--ink)]">
+    <div className="flex min-h-full max-w-[100vw] flex-col overflow-x-clip bg-[color:var(--ivory)] text-[color:var(--ink)]">
       <SiteHeader />
-      <main className="flex-1">{children}</main>
+      <main className="min-w-0 flex-1">{children}</main>
       <SiteFooter />
     </div>
   );

@@ -87,7 +87,7 @@ export function VerificationPanel() {
           type="button"
           disabled={busy || seconds > 0}
           onClick={onResend}
-          className="rounded-md bg-[color:var(--saffron)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="sp-btn-orange !px-4 !py-2 !text-sm"
         >
           {seconds > 0 ? `Resend available in ${seconds}s` : "Resend verification"}
         </button>
@@ -95,7 +95,7 @@ export function VerificationPanel() {
           type="button"
           disabled={busy}
           onClick={onCheck}
-          className="rounded-md bg-[color:var(--navy)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="sp-btn-navy !px-4 !py-2 !text-sm"
         >
           I&apos;ve verified my email
         </button>

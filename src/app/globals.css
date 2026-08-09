@@ -51,15 +51,22 @@
   --font-display: var(--font-body);
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body), "Montserrat", system-ui, sans-serif;
   min-height: 100%;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
+/* Do NOT set color: inherit on all anchors — it makes navy CTAs unreadable
+   inside coloured sections (saffron/orange) by pulling dark body text. */
 a {
-  color: inherit;
   text-decoration: none;
 }
 
@@ -85,40 +92,149 @@ textarea::placeholder {
   padding-right: 20px;
 }
 
-.sp-btn-orange {
+/* ── Shared CTA / button system (explicit fg/bg — never inherit) ── */
+.btn,
+.sp-btn-orange,
+.sp-btn-navy,
+.sp-btn-green,
+.sp-btn-chakra,
+.sp-btn-outline-white,
+.sp-btn-outline-navy {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--saffron);
-  color: #fff !important;
+  gap: 0.35rem;
   font-weight: 600;
   font-size: 16px;
+  line-height: 1.25;
   border-radius: 4px;
   padding: 12px 22px;
   border: none;
-  transition: background 0.2s ease;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none !important;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.sp-btn-orange:hover {
-  background: var(--saffron-hover);
-}
-
-.sp-btn-orange:disabled {
+.btn:disabled,
+.sp-btn-orange:disabled,
+.sp-btn-navy:disabled,
+.sp-btn-green:disabled,
+.sp-btn-chakra:disabled,
+.sp-btn-outline-white:disabled,
+.sp-btn-outline-navy:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
+/* Saffron / orange — dark navy label (WCAG-friendly on #ff671f) */
+.sp-btn-orange,
+.btn-saffron {
+  background: var(--saffron) !important;
+  color: #0a1b30 !important;
+}
+.sp-btn-orange:hover,
+.sp-btn-orange:focus-visible,
+.btn-saffron:hover,
+.btn-saffron:focus-visible {
+  background: var(--saffron-hover) !important;
+  color: #0a1b30 !important;
+}
+.sp-btn-orange:active,
+.btn-saffron:active {
+  background: var(--orange-deep) !important;
+  color: #ffffff !important;
+}
+
+/* Navy — white label */
+.sp-btn-navy,
+.btn-navy {
+  background: var(--navy) !important;
+  color: #ffffff !important;
+}
+.sp-btn-navy:hover,
+.sp-btn-navy:focus-visible,
+.btn-navy:hover,
+.btn-navy:focus-visible {
+  background: var(--navy-soft) !important;
+  color: #ffffff !important;
+}
+.sp-btn-navy:active,
+.btn-navy:active {
+  background: var(--navy-deep) !important;
+  color: #ffffff !important;
+}
+
+/* India green — white label */
+.sp-btn-green,
+.btn-green {
+  background: var(--india-green) !important;
+  color: #ffffff !important;
+}
+.sp-btn-green:hover,
+.sp-btn-green:focus-visible,
+.btn-green:hover,
+.btn-green:focus-visible {
+  background: #035a30 !important;
+  color: #ffffff !important;
+}
+
+/* Chakra blue — white label */
+.sp-btn-chakra,
+.btn-chakra {
+  background: var(--chakra) !important;
+  color: #ffffff !important;
+}
+.sp-btn-chakra:hover,
+.sp-btn-chakra:focus-visible {
+  background: #163f7d !important;
+  color: #ffffff !important;
+}
+
+/* Outline on dark surfaces */
 .sp-btn-outline-white {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #fff;
-  color: #fff !important;
-  font-weight: 600;
-  font-size: 16px;
-  border-radius: 4px;
+  border: 2px solid #fff !important;
+  color: #ffffff !important;
+  background: transparent !important;
   padding: 10px 20px;
-  background: transparent;
+}
+.sp-btn-outline-white:hover,
+.sp-btn-outline-white:focus-visible {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+/* Outline on light surfaces */
+.sp-btn-outline-navy {
+  border: 2px solid var(--navy) !important;
+  color: var(--navy) !important;
+  background: #ffffff !important;
+  padding: 10px 20px;
+}
+.sp-btn-outline-navy:hover,
+.sp-btn-outline-navy:focus-visible {
+  background: var(--wash) !important;
+  color: var(--navy) !important;
+}
+
+/* Safety net: any navy / green / chakra solid CTA must keep light text */
+a.sp-btn-navy,
+button.sp-btn-navy,
+a.btn-navy,
+button.btn-navy,
+a.sp-btn-green,
+button.sp-btn-green,
+a.sp-btn-chakra,
+button.sp-btn-chakra {
+  color: #ffffff !important;
+}
+
+a.sp-btn-orange,
+button.sp-btn-orange,
+a.btn-saffron,
+button.btn-saffron {
+  color: #0a1b30 !important;
 }
 
 .sp-card {
@@ -134,12 +250,35 @@ textarea::placeholder {
   height: 36px;
   border-radius: 50%;
   background: var(--saffron);
-  color: #fff;
+  color: #0a1b30;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
+}
+
+/* Responsive headings — wrap, never clip */
+.ir-headline {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.ir-band-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem 0.5rem;
+  max-width: 100%;
+  margin-inline: auto;
+  padding-inline: 0.25rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #ffffff;
+  font-size: clamp(1.15rem, 4.2vw, 1.875rem);
 }
 
 /* Status badges — always high contrast */
@@ -161,6 +300,52 @@ textarea::placeholder {
   background: linear-gradient(90deg, var(--saffron), var(--chakra), var(--india-green));
   height: 3px;
   border-radius: 999px;
+}
+
+/* Motion: route dash + freight plane (subtle presence) */
+.route-dash {
+  stroke-dasharray: 8 10;
+  animation: route-flow 2.8s linear infinite;
+}
+.route-parcel {
+  animation: parcel-drift 4.5s ease-in-out infinite;
+}
+.freight-plane {
+  animation: plane-bob 3.2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes route-flow {
+  to {
+    stroke-dashoffset: -36;
+  }
+}
+@keyframes parcel-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(10px, 4px);
+  }
+}
+@keyframes plane-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-dash,
+  .route-parcel,
+  .freight-plane {
+    animation: none;
+  }
 }
 
 /* Admin: force readable text on dark zinc backgrounds */
@@ -227,4 +412,29 @@ img[alt="IndiRoute"] {
 .dashboard-surface,
 [data-surface="light"] {
   color: var(--ink);
+}
+
+/* Prevent flex/grid children from forcing horizontal page scroll */
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+.sp-container,
+main,
+section {
+  max-width: 100%;
+}
+
+/* Utility: explicit on-saffron / on-navy text for non-button labels */
+.text-on-saffron {
+  color: #0a1b30 !important;
+}
+.text-on-navy,
+.text-on-green,
+.text-on-chakra {
+  color: #ffffff !important;
 }

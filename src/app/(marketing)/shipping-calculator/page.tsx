@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { TrustBadges } from "@/components/brand/TrustBadges";
+import { TricolorBar } from "@/components/brand/TricolorBar";
 import { formatAudCents } from "@/lib/format";
 
 type CalcResult = {
@@ -64,15 +66,19 @@ export default function ShippingCalculatorPage() {
   }
 
   return (
-    <div className="bg-[color:var(--wash)] py-10">
-      <div className="mx-auto grid max-w-[1140px] gap-6 px-4 md:grid-cols-[1fr_320px] md:px-5">
+    <div className="bg-[color:var(--wash)]">
+      <TricolorBar />
+      <div className="mx-auto max-w-[1140px] px-4 pt-8 md:px-5">
+        <TrustBadges dense />
+      </div>
+      <div className="mx-auto grid max-w-[1140px] gap-6 px-4 py-8 md:grid-cols-[1fr_320px] md:px-5">
         <div className="sp-card p-6 md:p-8">
-          <h1 className="text-2xl font-bold text-[#7c3aed] md:text-3xl">
+          <h1 className="text-2xl font-bold text-[color:var(--ink)] md:text-3xl">
             Calculate Your International Shipping Cost
           </h1>
           <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
             Estimate rates from India to Australia. Final payable quotes use warehouse
-            measurements only.
+            measurements only. Shipped from Indian hubs.
           </p>
 
           <div className="mt-8 space-y-6">
@@ -204,43 +210,45 @@ export default function ShippingCalculatorPage() {
         <aside className="space-y-4">
           <Link
             href="/pricing"
-            className="block rounded-xl bg-[#d7e7ff] px-4 py-3 text-center text-sm font-bold text-[color:var(--navy)]"
+            className="block rounded-xl border border-[color:var(--line)] bg-[color:var(--blue-soft)] px-4 py-3 text-center text-sm font-bold text-[color:var(--navy)]"
           >
             Seller Shipping Rates
           </Link>
-          <div className="rounded-xl bg-[#fff8e8] p-4 text-sm">
-            <Link href="/countries" className="block font-semibold text-[color:var(--blue)]">
+          <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--accent-soft)] p-4 text-sm">
+            <Link href="/countries" className="block font-semibold text-[color:var(--chakra)]">
               Country Guide
             </Link>
-            <Link href="/pricing" className="mt-2 block font-semibold text-[color:var(--blue)]">
-              Offers Available
+            <Link href="/pricing" className="mt-2 block font-semibold text-[color:var(--chakra)]">
+              Pricing overview
             </Link>
           </div>
-          <div
-            className="rounded-2xl p-5 text-white"
-            style={{ background: "linear-gradient(135deg,#a21caf,#ec4899)" }}
-          >
-            <p className="text-[10px] font-bold uppercase tracking-wider opacity-90">
-              First shipment
+          <div className="rounded-2xl bg-[color:var(--navy)] p-5 text-white">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--saffron)]">
+              Shipped from India
             </p>
-            <p className="mt-2 text-lg font-bold">First International Shipment?</p>
+            <p className="mt-2 text-lg font-bold">First international shipment?</p>
             <p className="mt-1 text-sm text-white/90">
               Transparent AUD pricing after warehouse weigh-in. No fake promo wallet credits.
             </p>
-            <Link href="/signup" className="mt-4 inline-block rounded-full bg-white/20 px-4 py-2 text-xs font-bold">
+            <Link
+              href="/signup"
+              className="sp-btn-orange mt-4 !px-4 !py-2 !text-xs !font-bold"
+            >
               Sign up free
             </Link>
           </div>
-          <div
-            className="rounded-2xl p-5 text-white"
-            style={{ background: "linear-gradient(135deg,#0f766e,#06b6d4)" }}
-          >
-            <p className="text-[10px] font-bold uppercase tracking-wider opacity-90">New user</p>
-            <p className="mt-2 text-lg font-bold">Need Help Buying from India?</p>
+          <div className="rounded-2xl bg-[color:var(--india-green)] p-5 text-white">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-white/80">
+              India locker
+            </p>
+            <p className="mt-2 text-lg font-bold">Need help buying from India?</p>
             <p className="mt-1 text-sm text-white/90">
               Assisted Purchase launches after Beta (P1). Get your locker address now.
             </p>
-            <Link href="/assisted-purchase" className="mt-4 inline-block rounded-full bg-white/20 px-4 py-2 text-xs font-bold">
+            <Link
+              href="/assisted-purchase"
+              className="mt-4 inline-block rounded-md bg-white/20 px-4 py-2 text-xs font-bold"
+            >
               Learn more
             </Link>
           </div>

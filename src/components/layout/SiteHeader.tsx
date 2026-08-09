@@ -29,8 +29,18 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 bg-[color:var(--navy)] text-white shadow-[0_2px_10px_rgba(0,0,0,0.2)]">
+      <div className="h-0.5 w-full bg-gradient-to-r from-[color:var(--saffron)] via-white to-[color:var(--india-green)]" />
       <div className="mx-auto flex max-w-[1140px] items-center justify-between gap-4 px-4 py-2.5 md:px-5">
-        <BrandLogo href={loggedIn ? "/dashboard" : "/"} variant="light" />
+        <div className="flex items-center gap-3">
+          <BrandLogo href={loggedIn ? "/dashboard" : "/"} variant="light" />
+          <span className="hidden items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/80 lg:inline-flex">
+            <span
+              className="h-2.5 w-2.5 rounded-sm bg-gradient-to-b from-[color:var(--saffron)] via-white to-[color:var(--india-green)]"
+              aria-hidden
+            />
+            Based in India
+          </span>
+        </div>
 
         <nav className="hidden items-center gap-5 text-[14px] font-medium xl:flex">
           {nav.map((item) => (
@@ -67,32 +77,23 @@ export function SiteHeader() {
         <div className="hidden items-center gap-2 sm:flex">
           {loading ? null : loggedIn ? (
             <>
-              <Link
-                href="/dashboard"
-                className="rounded-[4px] bg-[color:var(--saffron)] px-4 py-2 text-[15px] font-bold text-white hover:bg-[color:var(--saffron-hover)]"
-              >
+              <Link href="/dashboard" className="sp-btn-orange !px-4 !py-2 !text-[15px] !font-bold">
                 My Dashboard
               </Link>
               <button
                 type="button"
                 onClick={() => logout()}
-                className="rounded-[4px] border border-white/30 px-3 py-2 text-sm text-white hover:bg-white/10"
+                className="sp-btn-outline-white !px-3 !py-2 !text-sm"
               >
                 Log out
               </button>
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="rounded-[4px] border border-white/30 px-4 py-2 text-[15px] font-semibold text-white hover:bg-white/10"
-              >
+              <Link href="/login" className="sp-btn-outline-white !px-4 !py-2 !text-[15px]">
                 Login
               </Link>
-              <Link
-                href="/signup"
-                className="rounded-[4px] bg-[color:var(--saffron)] px-4 py-2 text-[15px] font-bold text-white hover:bg-[color:var(--saffron-hover)]"
-              >
+              <Link href="/signup" className="sp-btn-orange !px-4 !py-2 !text-[15px] !font-bold">
                 Get My India Address
               </Link>
             </>
