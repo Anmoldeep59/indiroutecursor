@@ -46,7 +46,7 @@ export default function AdminHomePage() {
 
   return (
     <div>
-      <PageTitle title="Ops dashboard" subtitle="Beta corridors: India → Australia" />
+      <PageTitle title="Ops dashboard" subtitle="Beta corridors: India → Australia"  variant="dark" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(([label, value]) => (
           <Panel key={label} className="!border-zinc-700 !bg-zinc-950">

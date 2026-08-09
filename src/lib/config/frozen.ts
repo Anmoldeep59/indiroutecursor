@@ -16,7 +16,7 @@ export const FROZEN = {
   indPrefix: "IND-",
   indBodyLength: 6,
   /** Default alphabet excluding visually ambiguous 0,O,1,I,L — override via founder input */
-  defaultIndAlphabet: "23456789ABCDEFGHJKMNPQRSTUVWXYZ",
+  defaultIndAlphabet: "ABCDEFGHJKMNPQRSTUVWXYZ23456789",
   assistedPurchaseInBeta: false,
   publicTrackingInBeta: false,
   courierApisInBeta: false,

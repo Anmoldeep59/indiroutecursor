@@ -61,7 +61,7 @@ export function Panel({
 }) {
   return (
     <div
-      className={`rounded-[8px] border border-[color:var(--line)] bg-white p-5 shadow-[var(--shadow-card)] ${className}`}
+      className={`rounded-[8px] border border-[color:var(--line)] bg-[color:var(--surface)] p-5 shadow-[var(--shadow-card)] text-[color:var(--ink)] ${className}`}
     >
       {children}
     </div>
@@ -71,15 +71,22 @@ export function Panel({
 export function PageTitle({
   title,
   subtitle,
+  variant = "light",
 }: {
   title: string;
   subtitle?: string;
+  /** light = dark text on ivory; dark = white text on admin navy/zinc */
+  variant?: "light" | "dark";
 }) {
+  const titleCls =
+    variant === "dark" ? "text-white" : "text-[color:var(--ink)]";
+  const subCls =
+    variant === "dark" ? "text-zinc-300" : "text-[color:var(--ink-soft)]";
   return (
     <div className="mb-6">
-      <h1 className="text-3xl font-bold text-[color:var(--navy)]">{title}</h1>
+      <h1 className={`text-3xl font-bold ${titleCls}`}>{title}</h1>
       {subtitle ? (
-        <p className="mt-2 max-w-2xl text-sm text-[color:var(--ink-soft)]">{subtitle}</p>
+        <p className={`mt-2 max-w-2xl text-sm ${subCls}`}>{subtitle}</p>
       ) : null}
     </div>
   );

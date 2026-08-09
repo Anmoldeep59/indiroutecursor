@@ -19,7 +19,7 @@ export default function CustomersPage() {
   });
   return (
     <div>
-      <PageTitle title="Customers" subtitle="Search by email or IND" />
+      <PageTitle title="Customers" subtitle="Search by email or IND"  variant="dark" />
       <Input className="mb-4 max-w-md !bg-zinc-950 !text-zinc-100 !border-zinc-700" placeholder="Search" value={qtext} onChange={(e) => setQtext(e.target.value)} />
       <Panel className="!border-zinc-700 !bg-zinc-950">
         <ul className="space-y-2 text-sm">

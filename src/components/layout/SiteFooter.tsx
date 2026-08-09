@@ -6,10 +6,10 @@ export function SiteFooter() {
     <footer className="mt-auto bg-[color:var(--navy)] text-white">
       <div className="mx-auto grid max-w-[1140px] gap-10 px-4 py-14 md:grid-cols-4 md:px-5">
         <div className="md:col-span-1">
-          <BrandLogo href="/" />
+          <BrandLogo href="/" variant="light" />
           <p className="mt-4 text-sm leading-relaxed text-white/70">
             Shop Indian stores and ship internationally. Personal India warehouse address,
-            consolidation, and Australia delivery for Beta.
+            consolidation, and Australia delivery for Beta. 🇮🇳 → 🇦🇺
           </p>
         </div>
         <div>

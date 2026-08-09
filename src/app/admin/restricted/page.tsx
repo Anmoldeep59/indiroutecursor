@@ -3,7 +3,7 @@ import { PageTitle, Panel, Alert } from "@/components/ui/ui";
 export default function RestrictedAdminPage() {
   return (
     <div>
-      <PageTitle title="Restricted items" />
+      <PageTitle title="Restricted items"  variant="dark" />
       <Alert tone="warn">
         [FOUNDER INPUT REQUIRED] Confirm final AU air prohibited list before launch.
       </Alert>

@@ -11,17 +11,25 @@ import {
   limit,
 } from "firebase/firestore";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { VerificationPanel } from "@/components/auth/VerificationPanel";
 import { getClientDb, isFirebaseClientConfigured } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import type { PackageRecord, ShipmentRecord } from "@/lib/types";
+import { freeDaysRemaining } from "@/lib/domain/storage";
 
 export default function DashboardHome() {
-  const { user, profile, resendVerification, getIdToken } = useAuth();
+  const { user, profile, emailVerified, getIdToken, refreshVerification } = useAuth();
   const [packages, setPackages] = useState<PackageRecord[]>([]);
   const [shipments, setShipments] = useState<ShipmentRecord[]>([]);
   const [addressLines, setAddressLines] = useState<string[] | null>(null);
-  const verified = Boolean(user?.emailVerified || profile?.emailVerified);
-  const name = profile?.displayName || user?.displayName || "there";
+  const [copied, setCopied] = useState(false);
+
+  const firstName =
+    (profile?.displayName || user?.displayName || "there").split(" ")[0] || "there";
+
+  useEffect(() => {
+    void refreshVerification();
+  }, [refreshVerification]);
 
   useEffect(() => {
     if (!isFirebaseClientConfigured() || !user) return;
@@ -37,12 +45,14 @@ export default function DashboardHome() {
       orderBy("updatedAt", "desc"),
       limit(50),
     );
-    const u1 = onSnapshot(pq, (snap) =>
-      setPackages(snap.docs.map((d) => d.data() as PackageRecord)),
+    const u1 = onSnapshot(
+      pq,
+      (snap) => setPackages(snap.docs.map((d) => d.data() as PackageRecord)),
       () => setPackages([]),
     );
-    const u2 = onSnapshot(sq, (snap) =>
-      setShipments(snap.docs.map((d) => d.data() as ShipmentRecord)),
+    const u2 = onSnapshot(
+      sq,
+      (snap) => setShipments(snap.docs.map((d) => d.data() as ShipmentRecord)),
       () => setShipments([]),
     );
     return () => {
@@ -54,7 +64,7 @@ export default function DashboardHome() {
   useEffect(() => {
     if (!user) return;
     void user.reload().then(async () => {
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (token) {
         await fetch("/api/auth/ensure-profile", {
           method: "POST",
@@ -69,7 +79,7 @@ export default function DashboardHome() {
   }, [user, getIdToken]);
 
   useEffect(() => {
-    if (!verified || !profile?.indId) {
+    if (!emailVerified || !profile?.indId) {
       setAddressLines(null);
       return;
     }
@@ -84,107 +94,138 @@ export default function DashboardHome() {
       .then((r) => r.json())
       .then((d) => setAddressLines(d.lines ?? null))
       .catch(() => setAddressLines(null));
-  }, [verified, profile?.indId, profile?.displayName, user?.displayName]);
+  }, [emailVerified, profile?.indId, profile?.displayName, user?.displayName]);
 
-  const lockerCount = useMemo(
-    () =>
-      packages.filter(
-        (p) =>
-          !p.consolidatedIntoId &&
-          ["Stored", "Action Required", "Awaiting Payment", "Consolidation Requested", "Packing"].includes(
-            p.status,
-          ),
+  const counts = useMemo(() => {
+    const active = packages.filter((p) => !p.consolidatedIntoId);
+    return {
+      warehouse: active.filter((p) =>
+        ["Stored", "Inspection", "Received"].includes(p.status),
       ).length,
-    [packages],
-  );
-  const transitCount = useMemo(
-    () =>
-      shipments.filter((s) =>
+      action: active.filter((p) => p.status === "Action Required").length,
+      ready: active.filter((p) =>
+        ["Awaiting Payment", "Ready to Ship"].includes(p.status),
+      ).length,
+      transit: shipments.filter((s) =>
         ["Shipped", "In Transit", "Customs", "Out for Delivery", "Ready to Ship"].includes(
           s.status,
         ),
       ).length,
-    [shipments],
-  );
-
-  const addressFields = useMemo(() => {
-    if (!addressLines?.length) return null;
-    return {
-      name: addressLines[0] ?? "",
-      line1: addressLines[1] ?? "",
-      line2: addressLines[2] ?? "",
-      cityLine: addressLines[3] ?? "",
-      country: addressLines[4] ?? "India",
     };
-  }, [addressLines]);
+  }, [packages, shipments]);
 
-  async function copyText(text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      /* ignore */
-    }
+  const recent = packages.filter((p) => !p.consolidatedIntoId).slice(0, 5);
+
+  async function copyAll() {
+    if (!addressLines?.length) return;
+    await navigator.clipboard.writeText(addressLines.join("\n"));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   return (
-    <div className="space-y-4">
-      {!verified ? (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          Verify your email to unlock your IND ID and warehouse address.{" "}
-          <button type="button" className="font-semibold underline" onClick={() => resendVerification()}>
-            Resend verification
-          </button>
-        </div>
-      ) : null}
+    <div className="space-y-4 text-[color:var(--ink)]">
+      <VerificationPanel />
 
       <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
         <div className="space-y-4">
-          {/* Welcome — NO wallet / loyalty */}
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <h1 className="text-2xl font-bold text-[color:var(--navy)]">
-              Welcome {name}
-            </h1>
-            <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
-              Your Locker ID:{" "}
-              <strong className="text-[color:var(--navy)]">
-                {verified && profile?.indId ? profile.indId : "Hidden until verified"}
-              </strong>
-            </p>
-            <p className="mt-3 text-xs text-[color:var(--muted)]">
-              No wallet · No loyalty points · Pay only when shipping via Stripe
-            </p>
+          <div
+            id="ind-id"
+            className="scroll-mt-4 rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] p-5 shadow-sm"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-bold text-[color:var(--ink)]">
+                  Welcome, {firstName}
+                </h1>
+                <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
+                  Your IndiRoute ID:{" "}
+                  <strong className="text-[color:var(--ink)]">
+                    {emailVerified && profile?.indId
+                      ? profile.indId
+                      : "Unlocks after email verification"}
+                  </strong>
+                </p>
+              </div>
+              <div className="rounded-full bg-[color:var(--wash)] px-3 py-1 text-xs font-semibold text-[color:var(--ink)]">
+                🇮🇳 → 🇦🇺 Beta
+              </div>
+            </div>
           </div>
 
           <div>
             <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--muted)]">
-              Your shipment overview
+              Overview
             </h2>
-            <div className="grid gap-3 md:grid-cols-3">
-              <OverviewCard
-                tone="teal"
-                title="Packages in Locker"
-                value={String(lockerCount)}
-                icon="📦"
-                cta="View Locker"
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard
+                label="Packages at warehouse"
+                value={counts.warehouse}
                 href="/dashboard/packages"
+                tone="green"
               />
-              <OverviewCard
-                tone="peach"
-                title="Shipments in Transit"
-                value={String(transitCount)}
-                icon="🚚"
-                cta="Track Now"
+              <StatCard
+                label="Awaiting action"
+                value={counts.action}
+                href="/dashboard/packages"
+                tone="saffron"
+              />
+              <StatCard
+                label="Ready to ship"
+                value={counts.ready}
+                href="/dashboard/ship"
+                tone="navy"
+              />
+              <StatCard
+                label="In transit"
+                value={counts.transit}
                 href="/dashboard/tracking"
-              />
-              <OverviewCard
-                tone="sky"
-                title="Personal Shopper"
-                value="P1"
-                icon="🛒"
-                cta="Coming Soon"
-                href="/assisted-purchase"
+                tone="blue"
               />
             </div>
+          </div>
+
+          <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                Recent packages
+              </h2>
+              <Link
+                href="/dashboard/packages"
+                className="text-sm font-semibold text-[color:var(--chakra)] hover:underline"
+              >
+                View locker
+              </Link>
+            </div>
+            <ul className="mt-4 space-y-3">
+              {recent.length === 0 ? (
+                <li className="rounded-lg bg-[color:var(--wash)] px-4 py-6 text-center text-sm text-[color:var(--ink-soft)]">
+                  No packages yet. Shop Indian stores and ship to your IndiRoute address.
+                </li>
+              ) : (
+                recent.map((pkg) => (
+                  <li
+                    key={pkg.id}
+                    className="flex items-center justify-between gap-3 border-t border-[color:var(--line)] pt-3 text-sm"
+                  >
+                    <div>
+                      <Link
+                        href={`/dashboard/packages/${pkg.id}`}
+                        className="font-semibold text-[color:var(--ink)] hover:underline"
+                      >
+                        {pkg.barcode}
+                      </Link>
+                      <p className="text-[color:var(--muted)]">{pkg.status}</p>
+                    </div>
+                    <div className="text-right text-[color:var(--muted)]">
+                      {pkg.storedAt ? (
+                        <p>Free days left: {freeDaysRemaining(pkg.storedAt)}</p>
+                      ) : null}
+                    </div>
+                  </li>
+                ))
+              )}
+            </ul>
           </div>
 
           <div>
@@ -195,13 +236,13 @@ export default function DashboardHome() {
               {[
                 { href: "/dashboard/ship", label: "Ship package" },
                 { href: "/dashboard/consolidate", label: "Consolidate" },
-                { href: "/shipping-calculator", label: "Calculator" },
+                { href: "/dashboard/tracking", label: "Tracking" },
                 { href: "/dashboard/support", label: "Support" },
               ].map((a) => (
                 <Link
                   key={a.href}
                   href={a.href}
-                  className="rounded-xl bg-white px-4 py-4 text-sm font-semibold text-[color:var(--navy)] shadow-sm hover:bg-[#f8fafc]"
+                  className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] px-4 py-4 text-sm font-semibold text-[color:var(--ink)] shadow-sm hover:border-[color:var(--saffron)]"
                 >
                   {a.label} →
                 </Link>
@@ -210,45 +251,47 @@ export default function DashboardHome() {
           </div>
         </div>
 
-        {/* Indian Virtual Address — Shoppre style */}
-        <aside className="overflow-hidden rounded-xl bg-white shadow-sm">
-          <div className="relative bg-[#2bbbad] px-4 py-3 text-center text-sm font-bold text-white">
-            Your Indian Virtual Address
-            <span className="absolute right-2 top-1 rounded bg-red-500 px-1.5 text-[9px] font-bold">
-              NEW
-            </span>
+        <aside
+          id="warehouse"
+          className="scroll-mt-4 overflow-hidden rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] shadow-sm"
+        >
+          <div className="bg-[color:var(--india-green)] px-4 py-3 text-center text-sm font-bold text-white">
+            Your India warehouse address
           </div>
           <div className="space-y-3 p-4">
-            <button
-              type="button"
-              disabled={!addressLines}
-              onClick={() => addressLines && copyText(addressLines.join("\n"))}
-              className="flex w-full items-center justify-center gap-2 rounded-md bg-[#f7aa18] px-3 py-3 text-sm font-bold text-white disabled:opacity-50"
-            >
-              ⧉ Copy Full Address
-            </button>
-
-            {!verified ? (
-              <p className="text-sm text-[color:var(--muted)]">
-                Verify email to reveal your address.
-              </p>
-            ) : !addressFields ? (
-              <p className="rounded-md bg-amber-50 p-3 text-xs text-amber-900">
-                [FOUNDER INPUT REQUIRED] Warehouse address lines are not configured in env yet.
-                Your IND ID is still: {profile?.indId}
+            {!emailVerified ? (
+              <p className="rounded-md bg-[color:var(--wash)] p-3 text-sm text-[color:var(--ink-soft)]">
+                Verify your email to reveal your permanent IND ID and warehouse address.
               </p>
             ) : (
               <>
-                <AddressRow label="Name" value={addressFields.name} onCopy={copyText} />
-                <AddressRow label="Address Line 1" value={addressFields.line1} onCopy={copyText} />
-                <AddressRow label="Address Line 2" value={addressFields.line2} onCopy={copyText} />
-                <AddressRow label="City / State / Postal" value={addressFields.cityLine} onCopy={copyText} />
-                <AddressRow label="Country" value={addressFields.country} onCopy={copyText} />
+                <button
+                  type="button"
+                  disabled={!addressLines}
+                  onClick={copyAll}
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-[color:var(--saffron)] px-3 py-3 text-sm font-bold text-white disabled:opacity-50"
+                >
+                  {copied ? "Copied!" : "Copy Full Address"}
+                </button>
+                {addressLines ? (
+                  addressLines.map((line) => (
+                    <div
+                      key={line}
+                      className="rounded-md border border-[color:var(--line)] bg-[color:var(--ivory)] px-3 py-2 text-sm text-[color:var(--ink)]"
+                    >
+                      {line}
+                    </div>
+                  ))
+                ) : (
+                  <p className="rounded-md bg-amber-50 p-3 text-xs text-amber-950">
+                    IND: {profile?.indId}. Warehouse street lines need founder env configuration.
+                  </p>
+                )}
+                <p className="text-[11px] leading-relaxed text-[color:var(--muted)]">
+                  Put your name + IND on the Indian checkout label (often Address Line 2).
+                </p>
               </>
             )}
-            <p className="text-[11px] leading-relaxed text-[color:var(--muted)]">
-              Put your name and IND on the Indian checkout label (often Address Line 2).
-            </p>
           </div>
         </aside>
       </div>
@@ -256,71 +299,30 @@ export default function DashboardHome() {
   );
 }
 
-function OverviewCard({
-  tone,
-  title,
-  value,
-  icon,
-  cta,
-  href,
-}: {
-  tone: "teal" | "peach" | "sky";
-  title: string;
-  value: string;
-  icon: string;
-  cta: string;
-  href: string;
-}) {
-  const top = {
-    teal: "bg-[#2bbbad]",
-    peach: "bg-[#f0a58e]",
-    sky: "bg-[#7ec8e3]",
-  }[tone];
-  return (
-    <div className="overflow-hidden rounded-xl bg-white shadow-sm">
-      <div className={`${top} px-4 py-5 text-center text-white`}>
-        <p className="text-[11px] font-bold uppercase tracking-wide">{title}</p>
-        <p className="mt-2 text-4xl">{icon}</p>
-        <p className="mt-1 text-3xl font-extrabold">{value}</p>
-      </div>
-      <div className="bg-[#eef6ff] p-3 text-center">
-        <Link
-          href={href}
-          className="inline-block rounded bg-[color:var(--navy)] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white"
-        >
-          {cta}
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function AddressRow({
+function StatCard({
   label,
   value,
-  onCopy,
+  href,
+  tone,
 }: {
   label: string;
-  value: string;
-  onCopy: (v: string) => void;
+  value: number;
+  href: string;
+  tone: "green" | "saffron" | "navy" | "blue";
 }) {
-  if (!value) return null;
+  const bg = {
+    green: "bg-[color:var(--india-green)]",
+    saffron: "bg-[color:var(--saffron)]",
+    navy: "bg-[color:var(--navy)]",
+    blue: "bg-[color:var(--chakra)]",
+  }[tone];
   return (
-    <div>
-      <p className="mb-1 text-[11px] font-semibold text-[color:var(--muted)]">{label}</p>
-      <div className="flex items-center gap-2">
-        <div className="min-h-[38px] flex-1 rounded-md border border-[#d9e2ec] bg-[#f8fafc] px-3 py-2 text-sm text-[color:var(--navy)]">
-          {value}
-        </div>
-        <button
-          type="button"
-          onClick={() => onCopy(value)}
-          className="rounded-md border border-[#d9e2ec] px-2 py-2 text-xs text-[color:var(--muted)] hover:bg-[color:var(--wash)]"
-          aria-label={`Copy ${label}`}
-        >
-          ⧉
-        </button>
-      </div>
-    </div>
+    <Link
+      href={href}
+      className={`rounded-xl ${bg} p-4 text-white shadow-sm transition hover:opacity-95`}
+    >
+      <p className="text-[11px] font-bold uppercase tracking-wide text-white/90">{label}</p>
+      <p className="mt-2 text-3xl font-extrabold text-white">{value}</p>
+    </Link>
   );
 }

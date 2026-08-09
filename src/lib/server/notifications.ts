@@ -18,27 +18,31 @@ export async function notifyUser(input: {
   entityId?: string;
 }): Promise<void> {
   const id = randomUUID();
-  await adminDb()
-    .collection(COLLECTIONS.notifications)
-    .doc(id)
-    .set({
-      id,
-      userId: input.userId,
-      type: input.type,
-      title: input.title,
-      body: input.body,
-      read: false,
-      entityType: input.entityType,
-      entityId: input.entityId,
-      createdAt: new Date().toISOString(),
-    });
+  const doc: Record<string, unknown> = {
+    id,
+    userId: input.userId,
+    type: input.type,
+    title: input.title,
+    body: input.body,
+    read: false,
+    createdAt: new Date().toISOString(),
+  };
+  if (input.entityType) doc.entityType = input.entityType;
+  if (input.entityId) doc.entityId = input.entityId;
+
+  await adminDb().collection(COLLECTIONS.notifications).doc(id).set(doc);
 
   if (input.sendEmail !== false && input.email) {
-    await sendTransactionalEmail({
-      to: input.email,
-      event: input.type as EmailEvent,
-      subject: input.title,
-      html: emailShell(input.title, `<p>${input.body}</p>`),
-    });
+    try {
+      await sendTransactionalEmail({
+        to: input.email,
+        event: input.type as EmailEvent,
+        subject: input.title,
+        html: emailShell(input.title, `<p>${input.body}</p>`),
+      });
+    } catch (err) {
+      // Never block auth/profile activation on outbound email provider issues
+      console.error("[notifyUser] transactional email failed", err);
+    }
   }
 }

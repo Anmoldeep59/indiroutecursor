@@ -24,7 +24,7 @@ export default function StaffPage() {
       <PageTitle
         title="Staff accounts"
         subtitle="Beta roles only: Warehouse Staff and Super Admin. Bootstrap staff docs in Firestore manually."
-      />
+       variant="dark" />
       {staff?.role !== "super_admin" ? (
         <Alert tone="warn">Only Super Admin can manage staff roles.</Alert>
       ) : (

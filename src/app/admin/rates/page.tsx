@@ -65,7 +65,7 @@ export default function RatesPage() {
       <PageTitle
         title="AUD sell-rate cards"
         subtitle="India → Australia only. No live FX. Super Admin confirmation required."
-      />
+       variant="dark" />
       <Panel className="!border-zinc-700 !bg-zinc-950">
         <ul className="space-y-2 text-sm">
           {rates.map((r) => (

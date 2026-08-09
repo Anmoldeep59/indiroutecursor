@@ -3,7 +3,7 @@ import { PageTitle, Panel, Alert } from "@/components/ui/ui";
 export default function CountriesAdminPage() {
   return (
     <div>
-      <PageTitle title="Countries" subtitle="Beta corridor lock" />
+      <PageTitle title="Countries" subtitle="Beta corridor lock"  variant="dark" />
       <Alert tone="info">Australia (AU) enabled. All other destinations blocked at checkout.</Alert>
       <Panel className="mt-4 !border-zinc-700 !bg-zinc-950 text-sm">
         <p>IN → AU: live</p>

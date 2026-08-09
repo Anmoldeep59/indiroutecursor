@@ -19,7 +19,7 @@ export default function Page() {
   }, []);
   return (
     <div>
-      <PageTitle title="Packing / consolidation queue" />
+      <PageTitle title="Packing / consolidation queue"  variant="dark" />
       <Panel className="!border-zinc-700 !bg-zinc-950">
         <ul className="space-y-2 text-sm">
           {rows.map((r) => (

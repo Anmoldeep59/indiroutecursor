@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Alert, Button, Input, Label, Panel } from "@/components/ui/ui";
+import { authErrorMessage } from "@/lib/auth/errors";
 
 export default function StaffLoginPage() {
   const { login, configured } = useAuth();
@@ -18,14 +20,15 @@ export default function StaffLoginPage() {
       await login(String(form.get("email")), String(form.get("password")));
       router.push("/admin");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(authErrorMessage(err, "Login failed"));
     }
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-zinc-100">
       <div className="w-full max-w-md">
-        <h1 className="text-2xl font-semibold">IndiRoute Admin</h1>
+        <BrandLogo href="/" variant="light" />
+        <h1 className="mt-6 text-2xl font-semibold">IndiRoute Admin</h1>
         <p className="mt-2 text-sm text-zinc-400">
           Staff accounts only (Warehouse Staff or Super Admin). No shared passwords.
         </p>

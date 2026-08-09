@@ -54,7 +54,7 @@ export default function ReceivePage() {
       <PageTitle
         title="Receive package"
         subtitle="Required photos: exterior + label. Storage clock starts at Stored. No routine opening."
-      />
+       variant="dark" />
       <Panel className="!border-zinc-700 !bg-zinc-950">
         <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
           <label className="md:col-span-2 flex items-center gap-2 text-sm">

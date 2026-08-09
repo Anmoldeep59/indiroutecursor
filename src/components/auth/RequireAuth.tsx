@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { AuthSplash } from "@/components/auth/AuthSplash";
 
 export function RequireAuth({
   children,
@@ -33,19 +34,27 @@ export function RequireAuth({
 
   if (!configured) {
     return (
-      <div className="p-8 text-sm text-amber-800">
+      <div className="flex min-h-screen items-center justify-center bg-[color:var(--ivory)] p-8 text-sm text-amber-900">
         Configure Firebase client environment variables to use this area.
       </div>
     );
   }
   if (loading || !user) {
-    return <div className="p-8 text-sm text-[color:var(--muted)]">Loading…</div>;
+    return <AuthSplash message="Checking your session…" />;
   }
   if (staffOnly && !staff) {
-    return <div className="p-8 text-sm">Staff access required.</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[color:var(--ivory)] p-8 text-sm text-[color:var(--ink)]">
+        Staff access required.
+      </div>
+    );
   }
   if (superAdminOnly && staff?.role !== "super_admin") {
-    return <div className="p-8 text-sm">Super Admin only.</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[color:var(--ivory)] p-8 text-sm text-[color:var(--ink)]">
+        Super Admin only.
+      </div>
+    );
   }
   return <>{children}</>;
 }

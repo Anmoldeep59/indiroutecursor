@@ -29,7 +29,7 @@ export default function AdminSettingsPage() {
       <PageTitle
         title="Settings"
         subtitle="Frozen policy values vs founder-configured env inputs"
-      />
+       variant="dark" />
       <Panel className="!border-zinc-700 !bg-zinc-950 space-y-2 text-sm">
         <p>Free storage days (frozen): {FROZEN.freeStorageDays}</p>
         <p>Storage fee INR/day (frozen): ₹{FROZEN.storageFeeInrPerDay}</p>

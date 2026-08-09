@@ -43,7 +43,7 @@ export default function CompleteConsolidationPage() {
       <PageTitle
         title="Complete consolidation"
         subtitle="Scan mismatch blocks completion. Re-measure and photograph final carton."
-      />
+       variant="dark" />
       <Panel className="!border-zinc-700 !bg-zinc-950">
         <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
           <div className="md:col-span-2">

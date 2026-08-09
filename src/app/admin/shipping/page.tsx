@@ -57,7 +57,7 @@ export default function ShippingQueuePage() {
 
   return (
     <div>
-      <PageTitle title="Shipping queue" subtitle="Manual courier booking + tracking entry. No courier APIs in Beta." />
+      <PageTitle title="Shipping queue" subtitle="Manual courier booking + tracking entry. No courier APIs in Beta."  variant="dark" />
       <Panel className="!border-zinc-700 !bg-zinc-950">
         <h2 className="font-medium">Ready to ship</h2>
         <ul className="mt-2 space-y-2 text-sm">
